@@ -23,4 +23,8 @@ int main(int argc, char * argv[]) {
 	while (!git_revwalk_next(&oid, walker)) {
 		std::cerr << "REV# " << ++i << "\n";
 	}
+	
+	git_revwalk_free(walker);
+	git_repository_free(repo);
+	return 0;
 }
