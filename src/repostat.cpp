@@ -9,13 +9,16 @@ int main(int argc, char * argv[]) {
 	git_repository *repo = NULL;
 	const char *url = "https://github.com/octocat/Spoon-Knife";
 	const char *path = "repos/spoon";
-	int error = git_clone(&repo, url, path, NULL);
-	// Check for error
+
+	// Check if repo is already cloned
+	if (git_clone(&repo, url, path, NULL) == GIT_EEXISTS) {
+		git_repository_open(&repo, path);
+	}
 
 	git_revwalk *walker;
 
-	error = git_revwalk_new(&walker, repo);
-	error = git_revwalk_push_head(walker);
+	git_revwalk_new(&walker, repo); // Returns Error Code
+	git_revwalk_push_head(walker); // Returns Error Code
 	git_revwalk_sorting(walker, GIT_SORT_TIME | GIT_SORT_REVERSE);
 
 	git_oid oid;
