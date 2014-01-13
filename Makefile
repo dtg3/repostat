@@ -1,6 +1,6 @@
-bin/repostat: repostat.cpp
+bin/repostat: src/repostat.cpp
 	mkdir -p bin
-	g++ repostat.cpp -lboost_filesystem -lboost_system -lgit2 -o bin/repostat
+	g++ src/repostat.cpp -lboost_filesystem -lboost_system -lgit2 -o bin/repostat
 
 .PHONY: clean
 clean:
