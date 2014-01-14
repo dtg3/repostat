@@ -1,10 +1,17 @@
-#include <boost/filesystem.hpp>
 #include <git2.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <sys/stat.h>
 
-// g++ repostat.cpp -lboost_filesystem -lboost_system -lgit2 -o rs
+#include <iostream>
+
 int main(int argc, char * argv[]) {
-	if (boost::filesystem::create_directory("repos"))
-		std::cerr << "Done!\n";
+
+	// Create directory to store repos
+	if (mkdir("repos", 0755) != 0) {
+		perror("Error creating repository directory");
+		return 0;
+	}
 
 	git_repository *repo = NULL;
 	const char *url = "https://github.com/octocat/Spoon-Knife";
