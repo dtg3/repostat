@@ -9,8 +9,17 @@
 
 #define REPOS_DIR "repos"
 
-
 int main(int argc, char * argv[]) {
+
+	// Check libgit2 version
+	int ver_major, ver_minor, ver_patch;
+	git_libgit2_version(&ver_major, &ver_minor, &ver_patch);
+
+	if (ver_minor < 20)
+	{
+		std::cerr << "libgit2 >= 0.20.x required" << '\n';
+		return 0;
+	}
 
 	// Look for the repository directory
 	struct stat st;
