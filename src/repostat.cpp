@@ -70,7 +70,7 @@ int main(int argc, char * argv[]) {
 		git_diff_tree_to_tree(&diff, repo, tree1, tree2, NULL);
 		git_patch_from_diff(&patch, diff, 0);
 
-		std::cerr << "REV# " << git_oid_allocfmt(&oid1) << '\n';
+		std::cerr << "COMMIT " << git_oid_allocfmt(&oid1) << '\n';
 
 		oid1 = oid2;
 	}
