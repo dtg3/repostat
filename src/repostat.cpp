@@ -26,10 +26,9 @@ int main(int argc, char * argv[]) {
 	const char *url = "https://github.com/octocat/Spoon-Knife";
 	const char *path = "repos/spoon";
 
-	// Check if repo is already cloned
-	if (git_clone(&repo, url, path, NULL) == GIT_EEXISTS) {
-		git_repository_open(&repo, path);
-	}
+	// Clone repo, and open it
+	git_clone(&repo, url, path, NULL);
+	git_repository_open(&repo, path);
 
 	git_revwalk *walker;
 
