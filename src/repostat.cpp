@@ -1,14 +1,23 @@
 #include <git2.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <sys/types.h>
 #include <sys/stat.h>
+#include <unistd.h>
 
 #include <iostream>
 
+#define REPOS_DIR "repos"
+
+
 int main(int argc, char * argv[]) {
 
+	// Look for the repository directory
+	struct stat st;
+	stat(REPOS_DIR, &st);
+
 	// Create directory to store repos
-	if (mkdir("repos", 0755) != 0) {
+	if ( ! S_ISDIR(st.st_mode) && mkdir(REPOS_DIR, 0755) < 0) {
 		perror("Error creating repository directory");
 		return 0;
 	}
