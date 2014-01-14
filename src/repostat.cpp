@@ -31,15 +31,14 @@ int main(int argc, char * argv[]) {
 	git_repository_open(&repo, path);
 
 	git_revwalk *walker;
+	git_oid oid;
 
 	git_revwalk_new(&walker, repo); // Returns Error Code
 	git_revwalk_push_head(walker); // Returns Error Code
 	git_revwalk_sorting(walker, GIT_SORT_TIME | GIT_SORT_REVERSE);
 
-	git_oid oid;
-	int i = 0;
-	while (!git_revwalk_next(&oid, walker)) {
-		std::cerr << "REV# " << ++i << "\n";
+	while ( ! git_revwalk_next(&oid, walker)) {
+		std::cerr << "REV# " << git_oid_allocfmt(&oid) << '\n';
 	}
 	
 	git_revwalk_free(walker);
