@@ -31,14 +31,39 @@ int main(int argc, char * argv[]) {
 	git_repository_open(&repo, path);
 
 	git_revwalk *walker;
-	git_oid oid;
 
 	git_revwalk_new(&walker, repo); // Returns Error Code
 	git_revwalk_push_head(walker); // Returns Error Code
-	git_revwalk_sorting(walker, GIT_SORT_TIME | GIT_SORT_REVERSE);
+	git_revwalk_sorting(walker, GIT_SORT_TOPOLOGICAL);
 
-	while ( ! git_revwalk_next(&oid, walker)) {
-		std::cerr << "REV# " << git_oid_allocfmt(&oid) << '\n';
+	git_oid oid1;
+	git_oid oid2;
+	git_commit *commit1;
+	git_commit *commit2;
+	git_tree *tree1;
+	git_tree *tree2;
+	git_diff *diff;
+	git_patch *patch;
+
+	// Pop the very first commit
+	git_revwalk_next(&oid1, walker);
+
+	while ( ! git_revwalk_next(&oid2, walker)) {
+		// Lookup this commit and the parent
+		git_commit_lookup(&commit1, repo, &oid1);
+		git_commit_lookup(&commit2, repo, &oid2);
+
+		// Lookup the tree for each commit
+		git_commit_tree(&tree1, commit1);
+		git_commit_tree(&tree2, commit2);
+
+		// Do diff between the two trees and create a patch
+		git_diff_tree_to_tree(&diff, repo, tree1, tree2, NULL);
+		git_patch_from_diff(&patch, diff, 0);
+
+		std::cerr << "REV# " << git_oid_allocfmt(&oid1) << '\n';
+
+		oid1 = oid2;
 	}
 	
 	git_revwalk_free(walker);
