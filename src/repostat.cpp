@@ -47,7 +47,7 @@ int main(int argc, char * argv[]) {
 	// Grab the first object ID
 	git_revwalk_next(&oid1, walker);
 
-	// Iterate over every commit. Currently this will miss the last commit
+	// Iterate over every commit. Currently this will miss the first commit
 	while ( ! git_revwalk_next(&oid2, walker)) {
 
 		// Lookup this commit and the parent
