@@ -62,10 +62,20 @@ int main(int argc, char * argv[]) {
 		git_diff_tree_to_tree(&diff, repo, tree1, tree2, NULL);
 		git_patch_from_diff(&patch, diff, 0);
 
-		std::cerr << "COMMIT " << git_oid_allocfmt(&oid1) << '\n';
+		char *sha = git_oid_allocfmt(&oid1);
+		std::cerr << "COMMIT " << sha << '\n';
+		free(sha);
 
 		// Move to the next object ID
 		oid1 = oid2;
+
+		// Clean up memory
+		git_commit_free(commit1);
+		git_commit_free(commit2);
+		git_tree_free(tree1);
+		git_tree_free(tree2);
+		git_diff_free(diff);
+		git_patch_free(patch);
 	}
 	
 	// Clean up memory
