@@ -66,6 +66,14 @@ int main(int argc, char * argv[]) {
 		std::cerr << "COMMIT " << sha << '\n';
 		free(sha);
 
+  		// Currently this will skip over some merge commits - at least, any
+  		// commits that have a zero delta.
+		if (patch != NULL)
+		{
+			size_t hunks = git_patch_num_hunks(patch);
+			std::cerr << "\tNumber of hunks: " << hunks << '\n';
+		}
+
 		// Move to the next object ID
 		oid1 = oid2;
 
