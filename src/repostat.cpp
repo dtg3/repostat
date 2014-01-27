@@ -1,7 +1,8 @@
 #include <git2.h>
 #include <iostream>
 
-typedef struct {
+typedef struct
+{
 	int line = 0;
 	int file = 0;
 	int hunk = 0;
@@ -9,27 +10,27 @@ typedef struct {
 
 int each_file_cb(const git_diff_delta *delta, float progress, void *payload)
 {
- 	diff_data *diffStats = (diff_data*)payload;
- 	diffStats->file = diffStats->file + 1;
- 	return 0;
+	diff_data *diffStats = (diff_data*)payload;
+	diffStats->file = diffStats->file + 1;
+	return 0;
 }
 
 int each_hunk_cb(const git_diff_delta *delta, const git_diff_hunk *hunk, void *payload)
 {
- 	diff_data *diffStats = (diff_data*)payload;
- 	diffStats->hunk = diffStats->hunk + 1;
-  	return 0;
+	diff_data *diffStats = (diff_data*)payload;
+	diffStats->hunk = diffStats->hunk + 1;
+	return 0;
 }
 
 int each_line_cb(const git_diff_delta *delta, const git_diff_hunk *hunk, const git_diff_line *line, void *payload)
 {
 	diff_data *diffStats = (diff_data*)payload;
- 	diffStats->line = diffStats->line + 1;
- 	return 0;
+	diffStats->line = diffStats->line + 1;
+	return 0;
 }
 
-int main(int argc, char * argv[]) {
-
+int main(int argc, char * argv[])
+{
 	git_repository *repo = NULL;
 	const char *path = "repos/spoon";
 	git_repository_open(&repo, path);
