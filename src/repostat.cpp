@@ -5,38 +5,29 @@
 #define REPOS_DIR "repos"
 
 typedef struct {
-				
-				int line = 0;
-				int file = 0;
-				int hunk = 0;
-				
-				} diff_data;
+	int line = 0;
+	int file = 0;
+	int hunk = 0;
+} diff_data;
 
-int each_file_cb(const git_diff_delta *delta,
-                 float progress,
-                 void *payload)
+int each_file_cb(const git_diff_delta *delta, float progress, void *payload)
 {
-  diff_data *d = (diff_data*)payload;
-  d->file = d->file + 1;
+  diff_data *diffStats = (diff_data*)payload;
+  diffStats->file = diffStats->file + 1;
   return 0;
 }
 
-int each_hunk_cb(const git_diff_delta *delta,
-                 const git_diff_hunk *hunk,
-                 void *payload)
+int each_hunk_cb(const git_diff_delta *delta, const git_diff_hunk *hunk, void *payload)
 {
-  diff_data *d = (diff_data*)payload;
-  d->hunk = d->hunk + 1;
+  diff_data *diffStats = (diff_data*)payload;
+  diffStats->hunk = diffStats->hunk + 1;
   return 0;
 }
 
-int each_line_cb(const git_diff_delta *delta,
-                 const git_diff_hunk *hunk,
-                 const git_diff_line *line,
-                 void *payload)
+int each_line_cb(const git_diff_delta *delta, const git_diff_hunk *hunk, const git_diff_line *line, void *payload)
 {
-  diff_data *d = (diff_data*)payload;
-  d->line = d->line + 1;
+  diff_data *diffStats = (diff_data*)payload;
+  diffStats->line = diffStats->line + 1;
   return 0;
 }
 
@@ -97,16 +88,16 @@ int main(int argc, char * argv[]) {
 		// Do a diff between the two trees and create a patch
 		git_diff_tree_to_tree(&diff, repo, tree1, tree2, NULL);
 
-		diff_data d = {};
-		int error = git_diff_foreach(diff,
-                       		 each_file_cb,
-                             each_hunk_cb,
-                             each_line_cb,
-                             &d);
-
-		std::cerr << "FILES: " << d.file << "\n";
-		std::cerr << "HUNKS: " << d.hunk << "\n";
-		std::cerr << "LINES: " << d.line << "\n";
+		diff_data diffStats = {};
+		
+		if(! git_diff_foreach(diff, each_file_cb, each_hunk_cb, each_line_cb, &diffStats)){
+			std::cerr << "FILES: " << diffStats.file << "\n";
+			std::cerr << "HUNKS: " << diffStats.hunk << "\n";
+			std::cerr << "LINES: " << diffStats.line << "\n";
+		}
+		else {
+			std::cerr << "Diff Error!\n";
+		}
 
 		git_patch_from_diff(&patch, diff, 0);
 
