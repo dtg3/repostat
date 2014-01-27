@@ -2,8 +2,6 @@
 #include <sys/stat.h>
 #include <iostream>
 
-#define REPOS_DIR "repos"
-
 typedef struct {
 	int line = 0;
 	int file = 0;
