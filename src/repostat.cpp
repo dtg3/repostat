@@ -51,7 +51,6 @@ int main(int argc, char * argv[]) {
 	git_tree *tree1;
 	git_tree *tree2;
 	git_diff *diff;
-	git_patch *patch;
 
 	// Grab the first object ID
 	git_revwalk_next(&oid1, walker);
@@ -81,8 +80,6 @@ int main(int argc, char * argv[]) {
 			std::cerr << "Diff Error!\n";
 		}
 
-		git_patch_from_diff(&patch, diff, 0);
-
 		char *sha = git_oid_allocfmt(&oid1);
 		std::cerr << "COMMIT " << sha << '\n';
 		free(sha);
@@ -96,7 +93,6 @@ int main(int argc, char * argv[]) {
 		git_tree_free(tree1);
 		git_tree_free(tree2);
 		git_diff_free(diff);
-		git_patch_free(patch);
 	}
 	
 	// Clean up memory
