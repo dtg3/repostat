@@ -33,24 +33,8 @@ int each_line_cb(const git_diff_delta *delta, const git_diff_hunk *hunk, const g
 
 int main(int argc, char * argv[]) {
 
-	// Look for the repository directory
-	struct stat st;
-	stat(REPOS_DIR, &st);
-
-	// Create directory to store repositories
-	if ( ! S_ISDIR(st.st_mode) && mkdir(REPOS_DIR, 0755) < 0) {
-		perror("Error creating repository directory");
-		return 0;
-	}
-
 	git_repository *repo = NULL;
-	const char *url  = "https://github.com/octocat/Spoon-Knife";
 	const char *path = "repos/spoon";
-
-	// Clone repository and open it. `git_clone` _does_ open it for us, but if
-	// it fails (i.e. the repo exists) it wont open it. There's no harm in
-	// re-opening the repo after cloning.
-	git_clone(&repo, url, path, NULL);
 	git_repository_open(&repo, path);
 
 	git_revwalk *walker;
