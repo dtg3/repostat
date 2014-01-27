@@ -71,6 +71,9 @@ int main(int argc, char * argv[]) {
 
 		diff_data diffStats = {};
 		
+		// Iterate through each delta within the diff to get file, line, and hunk info. 
+		// Note that this does not skip over merge commits, but it's not gauraunteed to 
+		// return the correct information for certain merge commits.
 		if(! git_diff_foreach(diff, each_file_cb, each_hunk_cb, each_line_cb, &diffStats)){
 			std::cerr << "FILES: " << diffStats.file << "\n";
 			std::cerr << "HUNKS: " << diffStats.hunk << "\n";
