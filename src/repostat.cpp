@@ -1,5 +1,4 @@
 #include <git2.h>
-#include <sys/stat.h>
 #include <iostream>
 
 typedef struct {
