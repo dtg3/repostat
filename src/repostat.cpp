@@ -10,23 +10,23 @@ typedef struct {
 
 int each_file_cb(const git_diff_delta *delta, float progress, void *payload)
 {
-  diff_data *diffStats = (diff_data*)payload;
-  diffStats->file = diffStats->file + 1;
-  return 0;
+ 	diff_data *diffStats = (diff_data*)payload;
+ 	diffStats->file = diffStats->file + 1;
+ 	return 0;
 }
 
 int each_hunk_cb(const git_diff_delta *delta, const git_diff_hunk *hunk, void *payload)
 {
-  diff_data *diffStats = (diff_data*)payload;
-  diffStats->hunk = diffStats->hunk + 1;
-  return 0;
+ 	diff_data *diffStats = (diff_data*)payload;
+ 	diffStats->hunk = diffStats->hunk + 1;
+  	return 0;
 }
 
 int each_line_cb(const git_diff_delta *delta, const git_diff_hunk *hunk, const git_diff_line *line, void *payload)
 {
-  diff_data *diffStats = (diff_data*)payload;
-  diffStats->line = diffStats->line + 1;
-  return 0;
+	diff_data *diffStats = (diff_data*)payload;
+ 	diffStats->line = diffStats->line + 1;
+ 	return 0;
 }
 
 int main(int argc, char * argv[]) {
