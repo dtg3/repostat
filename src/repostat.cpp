@@ -70,9 +70,9 @@ int main(int argc, char * argv[])
 		git_diff_tree_to_tree(&diff, repo, tree1, tree2, NULL);
 
 		diff_data diffStats = {};
-		
-		// Iterate through each delta within the diff to get file, line, and hunk info. 
-		// Note that this does not skip over merge commits, but it's not gauraunteed to 
+
+		// Iterate through each delta within the diff to get file, line, and hunk info.
+		// Note that this does not skip over merge commits, but it's not gauraunteed to
 		// return the correct information for certain merge commits.
 		if(! git_diff_foreach(diff, each_file_cb, each_hunk_cb, each_line_cb, &diffStats)){
 			std::cerr << "FILES: " << diffStats.file << "\n";
@@ -97,7 +97,7 @@ int main(int argc, char * argv[])
 		git_tree_free(tree2);
 		git_diff_free(diff);
 	}
-	
+
 	// Clean up memory
 	git_revwalk_free(walker);
 	git_repository_free(repo);
