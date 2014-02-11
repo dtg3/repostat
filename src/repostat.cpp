@@ -3,9 +3,9 @@
 
 typedef struct
 {
-	int line = 0;
-	int file = 0;
-	int hunk = 0;
+	int line;
+	int file;
+	int hunk;
 } diff_data;
 
 int each_file_cb(const git_diff_delta *delta, float progress, void *payload)
