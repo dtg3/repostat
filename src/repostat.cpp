@@ -31,10 +31,15 @@ int each_line_cb(const git_diff_delta *delta, const git_diff_hunk *hunk, const g
 
 int main(int argc, char * argv[])
 {
-	git_repository *repo = NULL;
-	const char *path = "repos/spoon";
-	git_repository_open(&repo, path);
+	if (argc < 2) {
+		std::cerr << "Repository path required.\n";
+		return 1;
+	}
 
+	const char *path = argv[1];
+	git_repository *repo = NULL;
+	git_repository_open(&repo, path);
+	
 	git_revwalk *walker;
 
 	// Setup revision walker to traverse the git repository directed graph of
