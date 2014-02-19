@@ -1,5 +1,8 @@
 #include <git2.h>
 #include <iostream>
+#include <fstream>
+#include <sstream>
+#include <ctime>
 
 typedef struct
 {
@@ -27,6 +30,31 @@ int each_line_cb(const git_diff_delta *delta, const git_diff_hunk *hunk, const g
 	diff_data *diffStats = (diff_data*)payload;
 	diffStats->line = diffStats->line + 1;
 	return 0;
+}
+
+std::string filename(const char* file)
+{
+	std::stringstream filename;
+	std::string repopath = std::string(file);
+	const size_t last_slash_idx = repopath.rfind('/');
+	if (std::string::npos != last_slash_idx)
+	{
+		repopath = repopath.substr(0, last_slash_idx);
+	}
+
+	const size_t second_last_slash_idx = repopath.rfind('/');
+	if (std::string::npos != last_slash_idx)
+	{
+		repopath = repopath.substr(second_last_slash_idx + 1);
+	}
+
+	filename << "results/" << repopath << ".";
+	// Append the current time to the end of the file name. Don't want to accidently over-write old data...
+	time_t t = time(0);
+	struct tm * now = localtime(&t);
+	filename << (now->tm_year + 1900) << "-" << (now->tm_mon + 1) << "-" << (now->tm_mday) << ".";
+	filename << (now->tm_hour) << "-" << (now->tm_min) << "-" << (now->tm_sec) << ".csv";
+	return filename.str();
 }
 
 int main(int argc, char * argv[])
@@ -60,8 +88,16 @@ int main(int argc, char * argv[])
 	// Grab the first object ID
 	git_revwalk_next(&oid1, walker);
 
+	// Create unique output file to place resulting repository history
+	std::ofstream output( filename(path).c_str() );
+	output << "sha, files modified, hunks modified, lines modified\n";
+
 	// Iterate over every commit. Currently this will miss the first commit
 	while ( ! git_revwalk_next(&oid2, walker)) {
+
+		char *sha = git_oid_allocfmt(&oid1);
+		output << sha << ", ";
+		free(sha);
 
 		// Lookup this commit and the parent
 		git_commit_lookup(&commit1, repo, &oid1);
@@ -80,17 +116,11 @@ int main(int argc, char * argv[])
 		// Note that this does not skip over merge commits, but it's not gauraunteed to
 		// return the correct information for certain merge commits.
 		if(! git_diff_foreach(diff, each_file_cb, each_hunk_cb, each_line_cb, &diffStats)){
-			std::cerr << "FILES: " << diffStats.file << "\n";
-			std::cerr << "HUNKS: " << diffStats.hunk << "\n";
-			std::cerr << "LINES: " << diffStats.line << "\n";
+			output << diffStats.file << ", " << diffStats.hunk << ", " << diffStats.line << "\n";
 		}
 		else {
 			std::cerr << "Diff Error!\n";
 		}
-
-		char *sha = git_oid_allocfmt(&oid1);
-		std::cerr << "COMMIT " << sha << '\n';
-		free(sha);
 
 		// Move to the next object ID
 		oid1 = oid2;
