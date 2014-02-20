@@ -1,3 +1,5 @@
+// WELCOME TO REPOSTAT
+
 #include <git2.h>
 #include <iostream>
 #include <fstream>
