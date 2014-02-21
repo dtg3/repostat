@@ -2,7 +2,8 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
-#include <ctime>
+#include <time.h>
+#include <libgen.h>
 
 typedef struct
 {
@@ -32,23 +33,13 @@ int each_line_cb(const git_diff_delta *delta, const git_diff_hunk *hunk, const g
 	return 0;
 }
 
-std::string filename(const char* file)
+std::string filename(const char* repopath)
 {
+	// Obtain the base name of the provided path
+	char* path = const_cast<char*>(repopath);
 	std::stringstream filename;
-	std::string repopath = std::string(file);
-	const size_t last_slash_idx = repopath.rfind('/');
-	if (std::string::npos != last_slash_idx)
-	{
-		repopath = repopath.substr(0, last_slash_idx);
-	}
+	filename << "results/" << basename(path) << ".";
 
-	const size_t second_last_slash_idx = repopath.rfind('/');
-	if (std::string::npos != last_slash_idx)
-	{
-		repopath = repopath.substr(second_last_slash_idx + 1);
-	}
-
-	filename << "results/" << repopath << ".";
 	// Append the current time to the end of the file name. Don't want to accidently over-write old data...
 	time_t t = time(0);
 	struct tm * now = localtime(&t);
