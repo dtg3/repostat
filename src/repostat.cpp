@@ -1,5 +1,3 @@
-// WELCOME TO REPOSTAT
-
 #include <git2.h>
 #include <iostream>
 #include <fstream>
@@ -17,27 +15,33 @@ int each_file_cb(const git_diff_delta *delta, float progress, void *payload)
 {
 	diff_data *diffStats = (diff_data*)payload;
 	diffStats->file = diffStats->file + 1;
+
 	return 0;
 }
 
-int each_hunk_cb(const git_diff_delta *delta, const git_diff_hunk *hunk, void *payload)
+int each_hunk_cb(const git_diff_delta *delta, const git_diff_hunk *hunk,
+		void *payload)
 {
 	diff_data *diffStats = (diff_data*)payload;
 	diffStats->hunk = diffStats->hunk + 1;
+
 	return 0;
 }
 
-int each_line_cb(const git_diff_delta *delta, const git_diff_hunk *hunk, const git_diff_line *line, void *payload)
+int each_line_cb(const git_diff_delta *delta, const git_diff_hunk *hunk,
+		const git_diff_line *line, void *payload)
 {
 	diff_data *diffStats = (diff_data*)payload;
 	diffStats->line = diffStats->line + 1;
+
 	return 0;
 }
 
-std::string filename(const char* file)
+std::string filename(const char *file)
 {
 	std::stringstream filename;
 	std::string repopath = std::string(file);
+
 	const size_t last_slash_idx = repopath.rfind('/');
 	if (std::string::npos != last_slash_idx)
 	{
@@ -51,18 +55,30 @@ std::string filename(const char* file)
 	}
 
 	filename << "results/" << repopath << ".";
-	// Append the current time to the end of the file name. Don't want to accidently over-write old data...
+
+	// Append the current time to the end of the file name. Don't want to
+	// accidently over-write old data...
 	time_t t = time(0);
-	struct tm * now = localtime(&t);
-	filename << (now->tm_year + 1900) << "-" << (now->tm_mon + 1) << "-" << (now->tm_mday) << ".";
-	filename << (now->tm_hour) << "-" << (now->tm_min) << "-" << (now->tm_sec) << ".csv";
+	struct tm *now = localtime(&t);
+
+	filename << (now->tm_year + 1900) << "-"
+	         << (now->tm_mon + 1)     << "-"
+	         << (now->tm_mday)
+	         << "."
+	         << (now->tm_hour) << "-"
+	         << (now->tm_min)  << "-"
+	         << (now->tm_sec)
+	         << ".csv";
+
 	return filename.str();
 }
 
-int main(int argc, char * argv[])
+int main(int argc, char *argv[])
 {
-	if (argc < 2) {
+	if (argc < 2)
+	{
 		std::cerr << "Repository path required.\n";
+
 		return 1;
 	}
 
@@ -95,8 +111,8 @@ int main(int argc, char * argv[])
 	output << "sha, files modified, hunks modified, lines modified\n";
 
 	// Iterate over every commit. Currently this will miss the first commit
-	while ( ! git_revwalk_next(&oid2, walker)) {
-
+	while ( ! git_revwalk_next(&oid2, walker))
+	{
 		char *sha = git_oid_allocfmt(&oid1);
 		output << sha << ", ";
 		free(sha);
@@ -114,13 +130,18 @@ int main(int argc, char * argv[])
 
 		diff_data diffStats = {};
 
-		// Iterate through each delta within the diff to get file, line, and hunk info.
-		// Note that this does not skip over merge commits, but it's not gauraunteed to
-		// return the correct information for certain merge commits.
-		if(! git_diff_foreach(diff, each_file_cb, each_hunk_cb, each_line_cb, &diffStats)){
-			output << diffStats.file << ", " << diffStats.hunk << ", " << diffStats.line << "\n";
+		// Iterate through each delta within the diff to get file, line, and
+		// hunk info.  Note that this does not skip over merge commits, but
+		// it's not gauraunteed to return the correct information for certain
+		// merge commits.
+		if ( ! git_diff_foreach(diff, each_file_cb, each_hunk_cb, each_line_cb, &diffStats))
+		{
+			output << diffStats.file << ", "
+			       << diffStats.hunk << ", "
+			       << diffStats.line << "\n";
 		}
-		else {
+		else
+		{
 			std::cerr << "Diff Error!\n";
 		}
 
