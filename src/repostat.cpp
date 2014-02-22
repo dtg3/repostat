@@ -33,7 +33,9 @@ int each_line_cb(const git_diff_delta *delta, const git_diff_hunk *hunk,
 		const git_diff_line *line, void *payload)
 {
 	diff_data *diffStats = (diff_data*)payload;
-	diffStats->line = diffStats->line + 1;
+
+	if(line->origin == GIT_DIFF_LINE_ADDITION || line->origin == GIT_DIFF_LINE_DELETION)
+		diffStats->line = diffStats->line + 1;
 
 	return 0;
 }
