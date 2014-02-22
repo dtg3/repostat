@@ -7,9 +7,9 @@
 
 typedef struct
 {
-	int line;
-	int file;
-	int hunk;
+	unsigned int line;
+	unsigned int file;
+	unsigned int hunk;
 } diff_data;
 
 int each_file_cb(const git_diff_delta *delta, float progress, void *payload)
