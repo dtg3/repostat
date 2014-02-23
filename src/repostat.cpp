@@ -74,6 +74,14 @@ void writeToCSV(std::ofstream& output, const diff_data& diffStats) {
 
 }
 
+void outputToTerminal(const diff_data& diffStats) {
+	std::cout << "Commit ID: " << diffStats.diff_id << "\n"
+			  << "Files: " << diffStats.file << "\n"
+			  << "Hunks: " << diffStats.hunk << "\n"
+			  << "Lines: " << diffStats.line << "\n"
+			  << "--------------------------------------\n";
+}
+
 int main(int argc, char *argv[])
 {
 	if (argc < 2)
@@ -136,6 +144,7 @@ int main(int argc, char *argv[])
 		if ( ! git_diff_foreach(diff, each_file_cb, each_hunk_cb, each_line_cb, &diffStats))
 		{
 			writeToCSV(output, diffStats);
+			//outputToTerminal(diffStats);
 		}
 		else
 		{
