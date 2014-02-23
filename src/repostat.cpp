@@ -7,6 +7,7 @@
 
 typedef struct
 {
+	char* diff_id;
 	unsigned int line;
 	unsigned int file;
 	unsigned int hunk;
@@ -64,6 +65,15 @@ std::string filename(const char *repopath)
 	return filename.str();
 }
 
+void writeToCSV(std::ofstream& output, const diff_data& diffStats) {
+	// Create unique output file to place resulting repository history
+	output << diffStats.diff_id << ", "
+	       << diffStats.file << ", "
+		   << diffStats.hunk << ", "
+		   << diffStats.line << "\n";
+
+}
+
 int main(int argc, char *argv[])
 {
 	if (argc < 2)
@@ -97,16 +107,16 @@ int main(int argc, char *argv[])
 	// Grab the first object ID
 	git_revwalk_next(&oid1, walker);
 
-	// Create unique output file to place resulting repository history
 	std::ofstream output( filename(path).c_str() );
 	output << "sha, files modified, hunks modified, lines modified\n";
 
 	// Iterate over every commit. Currently this will miss the first commit
 	while ( ! git_revwalk_next(&oid2, walker))
 	{
-		char *sha = git_oid_allocfmt(&oid1);
-		output << sha << ", ";
-		free(sha);
+		// Seup the struct for the data we care about
+		diff_data diffStats = {};
+
+		diffStats.diff_id = git_oid_allocfmt(&oid1);
 
 		// Lookup this commit and the parent
 		git_commit_lookup(&commit1, repo, &oid1);
@@ -119,17 +129,13 @@ int main(int argc, char *argv[])
 		// Do a diff between the two trees and create a patch
 		git_diff_tree_to_tree(&diff, repo, tree1, tree2, NULL);
 
-		diff_data diffStats = {};
-
 		// Iterate through each delta within the diff to get file, line, and
 		// hunk info.  Note that this does not skip over merge commits, but
 		// it's not gauraunteed to return the correct information for certain
 		// merge commits.
 		if ( ! git_diff_foreach(diff, each_file_cb, each_hunk_cb, each_line_cb, &diffStats))
 		{
-			output << diffStats.file << ", "
-			       << diffStats.hunk << ", "
-			       << diffStats.line << "\n";
+			writeToCSV(output, diffStats);
 		}
 		else
 		{
