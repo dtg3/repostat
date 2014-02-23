@@ -5,12 +5,17 @@
 #include <time.h>
 #include <libgen.h>
 
-typedef struct
+typedef struct diff_data
 {
-	char* diff_id;
-	unsigned int line;
-	unsigned int file;
-	unsigned int hunk;
+	public:
+		char* diff_id;
+		unsigned int line;
+		unsigned int file;
+		unsigned int hunk;
+	~diff_data()
+	{ 
+    	if (diff_id) delete diff_id;
+    }
 } diff_data;
 
 int each_file_cb(const git_diff_delta *delta, float progress, void *payload)
