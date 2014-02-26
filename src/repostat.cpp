@@ -7,15 +7,18 @@
 
 typedef struct diff_data
 {
-	public:
-		char* diff_id;
-		unsigned int line;
-		unsigned int file;
-		unsigned int hunk;
+
+public:
+	char* diff_id;
+	unsigned int line;
+	unsigned int file;
+	unsigned int hunk;
+
 	~diff_data()
 	{ 
-    	if (diff_id) free(diff_id);
-    }
+		if (diff_id) free(diff_id);
+	}
+
 } diff_data;
 
 int each_file_cb(const git_diff_delta *delta, float progress, void *payload)
@@ -70,21 +73,23 @@ std::string filename(const char *repopath)
 	return filename.str();
 }
 
-void writeToCSV(std::ofstream& output, const diff_data& diffStats) {
+void writeToCSV(std::ofstream& output, const diff_data& diffStats)
+{
 	// Create unique output file to place resulting repository history
 	output << diffStats.diff_id << ", "
 	       << diffStats.file << ", "
-		   << diffStats.hunk << ", "
-		   << diffStats.line << "\n";
+	       << diffStats.hunk << ", "
+	       << diffStats.line << "\n";
 
 }
 
-void outputToTerminal(const diff_data& diffStats) {
+void outputToTerminal(const diff_data& diffStats)
+{
 	std::cout << "Commit ID: " << diffStats.diff_id << "\n"
-			  << "Files: " << diffStats.file << "\n"
-			  << "Hunks: " << diffStats.hunk << "\n"
-			  << "Lines: " << diffStats.line << "\n"
-			  << "--------------------------------------\n";
+	          << "Files: " << diffStats.file << "\n"
+	          << "Hunks: " << diffStats.hunk << "\n"
+	          << "Lines: " << diffStats.line << "\n"
+	          << "--------------------------------------\n";
 }
 
 void progressBarUpdate()
