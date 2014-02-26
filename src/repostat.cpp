@@ -87,6 +87,13 @@ void outputToTerminal(const diff_data& diffStats) {
 			  << "--------------------------------------\n";
 }
 
+void progressBarUpdate()
+{
+	// Viewable only when we're not already outputting to the terminal
+	static long int count = 0;
+	std::cout << "Total commits analyzed: " << ++count << "\r";
+}
+
 int main(int argc, char *argv[])
 {
 	if (argc < 2)
@@ -158,6 +165,7 @@ int main(int argc, char *argv[])
 
 		// Move to the next object ID
 		oid1 = oid2;
+		progressBarUpdate();
 
 		// Clean up memory
 		git_commit_free(commit1);
