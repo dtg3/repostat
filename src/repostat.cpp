@@ -14,7 +14,7 @@ typedef struct diff_data
 		unsigned int hunk;
 	~diff_data()
 	{ 
-    	if (diff_id) delete diff_id;
+    	if (diff_id) free(diff_id);
     }
 } diff_data;
 
