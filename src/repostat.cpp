@@ -21,6 +21,14 @@ public:
 
 } diff_data;
 
+typedef struct commit_data
+{
+	git_time_t time;
+	unsigned int numParents;
+	char* author;
+	char* committer;
+} commit_data;
+
 int each_file_cb(const git_diff_delta *delta, float progress, void *payload)
 {
 	diff_data *diffStats = (diff_data*)payload;
@@ -73,22 +81,31 @@ std::string filename(const char *repopath)
 	return filename.str();
 }
 
-void writeToCSV(std::ofstream& output, const diff_data& diffStats)
+void writeToCSV(std::ofstream& output, const diff_data& diffStats, 
+		const commit_data& commitStats)
 {
 	// Create unique output file to place resulting repository history
 	output << diffStats.diff_id << ", "
 	       << diffStats.file << ", "
 	       << diffStats.hunk << ", "
-	       << diffStats.line << "\n";
+	       << diffStats.line << ", "
+	       << commitStats.time << ", "
+	       << commitStats.numParents << ", "
+	       << commitStats.author << ", "
+	       << commitStats.committer << "\n";
 
 }
 
-void outputToTerminal(const diff_data& diffStats)
+void outputToTerminal(const diff_data& diffStats, const commit_data& commitStats)
 {
 	std::cout << "Commit ID: " << diffStats.diff_id << "\n"
 	          << "Files: " << diffStats.file << "\n"
 	          << "Hunks: " << diffStats.hunk << "\n"
 	          << "Lines: " << diffStats.line << "\n"
+	          << "Time: " << commitStats.time << "\n"
+	          << "Parents: " << commitStats.numParents << "\n"
+	          << "Author: " << commitStats.author << "\n"
+	          << "Committer: " << commitStats.committer << "\n"
 	          << "--------------------------------------\n";
 }
 
@@ -133,13 +150,15 @@ int main(int argc, char *argv[])
 	git_revwalk_next(&oid1, walker);
 
 	std::ofstream output( filename(path).c_str() );
-	output << "sha, files modified, hunks modified, lines modified\n";
+	output << "sha, files modified, hunks modified, lines modified, ";
+	output << "commit time, number of parents, author, committer\n";
 
 	// Iterate over every commit. Currently this will miss the first commit
 	while ( ! git_revwalk_next(&oid2, walker))
 	{
-		// Seup the struct for the data we care about
+		// Seup the structs for the data we care about
 		diff_data diffStats = {};
+		commit_data commitStats = {};
 
 		diffStats.diff_id = git_oid_allocfmt(&oid1);
 
@@ -160,8 +179,14 @@ int main(int argc, char *argv[])
 		// merge commits.
 		if ( ! git_diff_foreach(diff, each_file_cb, each_hunk_cb, each_line_cb, &diffStats))
 		{
-			writeToCSV(output, diffStats);
-			//outputToTerminal(diffStats);
+			
+			commitStats.time       = git_commit_time(commit2);
+			commitStats.numParents = git_commit_parentcount(commit2);
+			commitStats.author     = git_commit_author(commit2)->name;
+			commitStats.committer  = git_commit_committer(commit2)->name;
+
+			writeToCSV(output, diffStats, commitStats);
+			//outputToTerminal(diffStats, commitStats);
 		}
 		else
 		{
