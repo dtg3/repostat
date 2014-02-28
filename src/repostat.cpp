@@ -1,3 +1,7 @@
+/*
+	@brief Collects metrics on the commit history of a repository
+*/
+
 #include <git2.h>
 #include <iostream>
 #include <fstream>
@@ -95,7 +99,6 @@ std::string convertTime(git_time_t t)
 void writeToCSV(std::ofstream& output, const diff_data& diffStats, 
 		const commit_data& commitStats)
 {
-	// Create unique output file to place resulting repository history
 	output << diffStats.diff_id << ", "
 	       << diffStats.file << ", "
 	       << diffStats.hunk << ", "
@@ -160,6 +163,7 @@ int main(int argc, char *argv[])
 	// Grab the first object ID
 	git_revwalk_next(&oid1, walker);
 
+	// Create unique output file to place resulting repository history
 	std::ofstream output( filename(path).c_str() );
 	output << "sha, files modified, hunks modified, lines modified, ";
 	output << "commit time, number of parents, author, committer\n";
@@ -190,7 +194,7 @@ int main(int argc, char *argv[])
 		// merge commits.
 		if ( ! git_diff_foreach(diff, each_file_cb, each_hunk_cb, each_line_cb, &diffStats))
 		{
-			
+			// Gather commit specific data
 			commitStats.time       = git_commit_time(commit2);
 			commitStats.numParents = git_commit_parentcount(commit2);
 			commitStats.author     = git_commit_author(commit2)->name;
@@ -201,7 +205,7 @@ int main(int argc, char *argv[])
 		}
 		else
 		{
-			std::cerr << "Diff Error!\n";
+			std::cerr << "Diff error on sha: " << diffStats.diff_id << "!\n";
 		}
 
 		// Move to the next object ID
