@@ -4,6 +4,7 @@
 #include <sstream>
 #include <time.h>
 #include <libgen.h>
+#include <ctime>
 
 typedef struct diff_data
 {
@@ -81,6 +82,16 @@ std::string filename(const char *repopath)
 	return filename.str();
 }
 
+std::string convertTime(git_time_t t)
+{
+	time_t tm(t);
+	char ct[] = "YYYY-MM-DDThh:mm:ssZ";
+	strftime(ct, sizeof ct, "%FT%TZ", gmtime(&tm));
+
+	std::string stime = std::string(ct);
+	return stime;
+}
+
 void writeToCSV(std::ofstream& output, const diff_data& diffStats, 
 		const commit_data& commitStats)
 {
@@ -89,7 +100,7 @@ void writeToCSV(std::ofstream& output, const diff_data& diffStats,
 	       << diffStats.file << ", "
 	       << diffStats.hunk << ", "
 	       << diffStats.line << ", "
-	       << commitStats.time << ", "
+	       << convertTime(commitStats.time) << ", "
 	       << commitStats.numParents << ", "
 	       << commitStats.author << ", "
 	       << commitStats.committer << "\n";
@@ -102,7 +113,7 @@ void outputToTerminal(const diff_data& diffStats, const commit_data& commitStats
 	          << "Files: " << diffStats.file << "\n"
 	          << "Hunks: " << diffStats.hunk << "\n"
 	          << "Lines: " << diffStats.line << "\n"
-	          << "Time: " << commitStats.time << "\n"
+	          << "Time: " << convertTime(commitStats.time) << "\n"
 	          << "Parents: " << commitStats.numParents << "\n"
 	          << "Author: " << commitStats.author << "\n"
 	          << "Committer: " << commitStats.committer << "\n"
