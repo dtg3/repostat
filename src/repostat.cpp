@@ -12,8 +12,6 @@
 
 typedef struct diff_data
 {
-
-public:
 	char* diff_id;
 	unsigned int line;
 	unsigned int file;
