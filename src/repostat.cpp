@@ -163,7 +163,7 @@ int main(int argc, char *argv[])
 	// Create unique output file to place resulting repository history
 	std::ofstream output( filename(path).c_str() );
 	if (!output) {
-		std::cout << "Could not open output folder at: " << filename(path) << "\n";
+		std::cerr << "Could not open output folder at: " << filename(path) << "\n";
 		return 2;
 	}
 	output << "sha, files modified, hunks modified, lines modified, ";
