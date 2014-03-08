@@ -133,7 +133,6 @@ int main(int argc, char *argv[])
 	if (argc < 2)
 	{
 		std::cerr << "Repository path required.\n";
-
 		return 1;
 	}
 
@@ -163,6 +162,10 @@ int main(int argc, char *argv[])
 
 	// Create unique output file to place resulting repository history
 	std::ofstream output( filename(path).c_str() );
+	if (!output) {
+		std::cout << "Could not open output folder at: " << filename(path) << "\n";
+		return 2;
+	}
 	output << "sha, files modified, hunks modified, lines modified, ";
 	output << "commit time, number of parents, author, committer\n";
 
@@ -203,7 +206,7 @@ int main(int argc, char *argv[])
 		}
 		else
 		{
-			std::cerr << "Diff error on sha: " << diffStats.diff_id << "!\n";
+			std::cerr << "\nDiff error on sha: " << diffStats.diff_id << "!\n";
 		}
 
 		// Move to the next object ID
