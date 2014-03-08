@@ -162,12 +162,16 @@ int main(int argc, char *argv[])
 
 	// Create unique output file to place resulting repository history
 	std::ofstream output( filename(path).c_str() );
-	if (!output) {
+
+	if ( ! output)
+	{
 		std::cerr << "Could not open output folder at: " << filename(path) << "\n";
 		return 2;
 	}
-	output << "sha, files modified, hunks modified, lines modified, ";
-	output << "commit time, number of parents, author, committer\n";
+
+	// CSV headers
+	output << "sha, files modified, hunks modified, lines modified, "
+	       << "commit time, number of parents, author, committer\n";
 
 	// Iterate over every commit. Currently this will miss the first commit
 	while ( ! git_revwalk_next(&oid2, walker))
