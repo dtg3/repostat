@@ -66,9 +66,9 @@ int main()
 
 	output << "repository, "
 	       << "sha, "
-           << "files modified, "
-           << "hunks modified, "
-           << "lines modified, "
+	       << "files modified, "
+	       << "hunks modified, "
+	       << "lines modified, "
 	       << "commit time, "
 	       << "number of parents, "
 	       << "author, "
@@ -85,13 +85,13 @@ int main()
 		for (int i = 0; i < 8; ++i)
 			std::getline(input, temp);
 
-		if (!input)
+		if ( ! input)
 		{
 			std::cout << "\nCouldn't open file " << csvFiles[i] << "\n";
 			return 1;
 		}
 
-		while (!input.eof())
+		while ( ! input.eof())
 		{
 			std::string line;
 			std::getline(input, line);
