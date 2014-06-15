@@ -57,6 +57,12 @@ int each_line_cb(const git_diff_delta *delta, const git_diff_hunk *hunk,
 	if(line->origin == GIT_DIFF_LINE_ADDITION || line->origin == GIT_DIFF_LINE_DELETION)
 		diffStats->line = diffStats->line + 1;
 
+	std::cout << "************ " << diffStats->diff_id << " *************\n";
+	for (size_t i = 0; i < line->content_len; ++i) {
+		std::cout << line->content[i];	
+	}
+	std::cout << "*************************\n";
+
 	return 0;
 }
 
@@ -159,7 +165,12 @@ int main(int argc, char *argv[])
 	git_diff_options opts = GIT_DIFF_OPTIONS_INIT;
 
 	// Set Diff Flag Options
+	opts.flags |= GIT_DIFF_IGNORE_WHITESPACE;
 	opts.flags |= GIT_DIFF_IGNORE_WHITESPACE_CHANGE;
+	opts.flags |= GIT_DIFF_IGNORE_WHITESPACE_EOL;
+
+	// Turn off context to only get modified lines
+	opts.context_lines = 0;
 
 	// Grab the first object ID
 	git_revwalk_next(&oid1, walker);
