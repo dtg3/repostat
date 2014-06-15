@@ -156,6 +156,10 @@ int main(int argc, char *argv[])
 	git_tree *tree1;
 	git_tree *tree2;
 	git_diff *diff;
+	git_diff_options opts = GIT_DIFF_OPTIONS_INIT;
+
+	// Set Diff Flag Options
+	opts.flags |= GIT_DIFF_IGNORE_WHITESPACE_CHANGE;
 
 	// Grab the first object ID
 	git_revwalk_next(&oid1, walker);
@@ -191,7 +195,7 @@ int main(int argc, char *argv[])
 		git_commit_tree(&tree2, commit2);
 
 		// Do a diff between the two trees and create a patch
-		git_diff_tree_to_tree(&diff, repo, tree1, tree2, NULL);
+		git_diff_tree_to_tree(&diff, repo, tree1, tree2, &opts);
 
 		// Iterate through each delta within the diff to get file, line, and
 		// hunk info.  Note that this does not skip over merge commits, but
@@ -229,5 +233,8 @@ int main(int argc, char *argv[])
 	git_revwalk_free(walker);
 	git_repository_free(repo);
 
+	// Move output to new terminal line
+	std::cout << "\n";
+	
 	return 0;
 }
