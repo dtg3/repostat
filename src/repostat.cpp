@@ -168,6 +168,7 @@ int main(int argc, char *argv[])
 	opts.flags |= GIT_DIFF_IGNORE_WHITESPACE;
 	opts.flags |= GIT_DIFF_IGNORE_WHITESPACE_CHANGE;
 	opts.flags |= GIT_DIFF_IGNORE_WHITESPACE_EOL;
+	// opts.flags |= GIT_DIFF_MINIMAL;
 
 	// Turn off context to only get modified lines
 	opts.context_lines = 0;
