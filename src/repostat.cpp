@@ -14,6 +14,8 @@ typedef struct diff_data
 {
 	char* diff_id;
 	unsigned int line;
+	unsigned int lineAdded;
+	unsigned int lineRemoved;
 	unsigned int file;
 	unsigned int hunk;
 
@@ -52,16 +54,37 @@ int each_hunk_cb(const git_diff_delta *delta, const git_diff_hunk *hunk,
 int each_line_cb(const git_diff_delta *delta, const git_diff_hunk *hunk,
 		const git_diff_line *line, void *payload)
 {
+	bool whiteSpaceOnly = true;
+
 	diff_data *diffStats = (diff_data*)payload;
 
-	if(line->origin == GIT_DIFF_LINE_ADDITION || line->origin == GIT_DIFF_LINE_DELETION)
-		diffStats->line = diffStats->line + 1;
-
-	std::cout << "************ " << diffStats->diff_id << " *************\n";
 	for (size_t i = 0; i < line->content_len; ++i) {
-		std::cout << line->content[i];	
+		
+		// Check for common whitespace
+		if (line->content[i] == '\n')
+			continue;
+
+		if (line->content[i] == '\t')
+			continue;
+
+		if (line->content[i] == ' ')
+			continue;
+
+		// If there is a non whitespace character we
+		//   want to consider the line;
+		whiteSpaceOnly = false;
+		break;
 	}
-	std::cout << "*************************\n";
+
+	if(!whiteSpaceOnly && (line->origin == GIT_DIFF_LINE_ADDITION || line->origin == GIT_DIFF_LINE_DELETION)) {
+		++(diffStats->line);
+		if (line->origin == GIT_DIFF_LINE_DELETION) {
+			++(diffStats->lineAdded);
+		}
+		if (line->origin == GIT_DIFF_LINE_ADDITION) {
+			++(diffStats->lineRemoved);
+		}
+	}
 
 	return 0;
 }
@@ -106,6 +129,8 @@ void writeToCSV(std::ofstream& output, const diff_data& diffStats,
 	output << diffStats.diff_id << ", "
 	       << diffStats.file << ", "
 	       << diffStats.hunk << ", "
+	       << diffStats.lineAdded << ", "
+	       << diffStats.lineRemoved << ", "
 	       << diffStats.line << ", "
 	       << convertTime(commitStats.time) << ", "
 	       << commitStats.numParents << ", "
@@ -119,7 +144,9 @@ void outputToTerminal(const diff_data& diffStats, const commit_data& commitStats
 	std::cout << "Commit ID: " << diffStats.diff_id << "\n"
 	          << "Files: " << diffStats.file << "\n"
 	          << "Hunks: " << diffStats.hunk << "\n"
-	          << "Lines: " << diffStats.line << "\n"
+	          << "Lines Added: " << diffStats.lineAdded << "\n"
+	          << "Lines Removed: " << diffStats.lineRemoved << "\n"
+	          << "Total Lines: " << diffStats.line << "\n"
 	          << "Time: " << convertTime(commitStats.time) << "\n"
 	          << "Parents: " << commitStats.numParents << "\n"
 	          << "Author: " << commitStats.author << "\n"
@@ -186,7 +213,7 @@ int main(int argc, char *argv[])
 	}
 
 	// CSV headers
-	output << "sha, files modified, hunks modified, lines modified, "
+	output << "sha, files modified, hunks modified, lines added, lines removed, lines modified, "
 	       << "commit time, number of parents, author, committer\n";
 
 	// Iterate over every commit. Currently this will miss the first commit
@@ -216,10 +243,10 @@ int main(int argc, char *argv[])
 		if ( ! git_diff_foreach(diff, each_file_cb, each_hunk_cb, each_line_cb, &diffStats))
 		{
 			// Gather commit specific data
-			commitStats.time       = git_commit_time(commit2);
-			commitStats.numParents = git_commit_parentcount(commit2);
-			commitStats.author     = git_commit_author(commit2)->name;
-			commitStats.committer  = git_commit_committer(commit2)->name;
+			commitStats.time       = git_commit_time(commit1);
+			commitStats.numParents = git_commit_parentcount(commit1);
+			commitStats.author     = git_commit_author(commit1)->name;
+			commitStats.committer  = git_commit_committer(commit1)->name;
 
 			writeToCSV(output, diffStats, commitStats);
 			//outputToTerminal(diffStats, commitStats);
