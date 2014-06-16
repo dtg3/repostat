@@ -97,13 +97,13 @@ std::string convertTime(git_time_t t)
 void writeToCSV(std::ofstream& output, const diff_data& diffStats, 
 		const commit_data& commitStats)
 {
-	output << diffStats.diff_id << ", "
-	       << diffStats.file << ", "
-	       << diffStats.hunk << ", "
-	       << diffStats.line << ", "
-	       << convertTime(commitStats.time) << ", "
-	       << commitStats.numParents << ", "
-	       << commitStats.author << ", "
+	output << diffStats.diff_id << ";"
+	       << diffStats.file << ";"
+	       << diffStats.hunk << ";"
+	       << diffStats.line << ";"
+	       << convertTime(commitStats.time) << ";"
+	       << commitStats.numParents << ";"
+	       << commitStats.author << ";"
 	       << commitStats.committer << "\n";
 
 }
@@ -180,8 +180,8 @@ int main(int argc, char *argv[])
 	}
 
 	// CSV headers
-	output << "sha, files modified, hunks modified, lines modified, "
-	       << "commit time, number of parents, author, committer\n";
+	output << "sha;files modified;hunks modified;lines modified;"
+	       << "commit time;number of parents;author;committer\n";
 
 	// Iterate over every commit. Currently this will miss the first commit
 	while ( ! git_revwalk_next(&oid2, walker))
