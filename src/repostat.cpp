@@ -57,12 +57,6 @@ int each_line_cb(const git_diff_delta *delta, const git_diff_hunk *hunk,
 	if(line->origin == GIT_DIFF_LINE_ADDITION || line->origin == GIT_DIFF_LINE_DELETION)
 		diffStats->line = diffStats->line + 1;
 
-	std::cout << "************ " << diffStats->diff_id << " *************\n";
-	for (size_t i = 0; i < line->content_len; ++i) {
-		std::cout << line->content[i];	
-	}
-	std::cout << "*************************\n";
-
 	return 0;
 }
 
