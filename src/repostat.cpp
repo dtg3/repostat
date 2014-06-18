@@ -29,6 +29,7 @@ typedef struct diff_data
 typedef struct commit_data
 {
 	git_time_t time;
+	int timeOffset;
 	unsigned int numParents;
 	char* author;
 	char* committer;
@@ -133,6 +134,7 @@ void writeToCSV(std::ofstream& output, const diff_data& diffStats,
 	       << diffStats.lineRemoved << ";"
 	       << diffStats.line << ";"
 	       << convertTime(commitStats.time) << ";"
+	       << commitStats.timeOffset << ";"
 	       << commitStats.numParents << ";"
 	       << commitStats.author << ";"
 	       << commitStats.committer << "\n";
@@ -147,6 +149,7 @@ void outputToTerminal(const diff_data& diffStats, const commit_data& commitStats
 	          << "Lines Removed: " << diffStats.lineRemoved << "\n"
 	          << "Total Lines: " << diffStats.line << "\n"
 	          << "Time: " << convertTime(commitStats.time) << "\n"
+	          << "Time Offset:" << commitStats.timeOffset << "\n"
 	          << "Parents: " << commitStats.numParents << "\n"
 	          << "Author: " << commitStats.author << "\n"
 	          << "Committer: " << commitStats.committer << "\n"
@@ -213,7 +216,7 @@ int main(int argc, char *argv[])
 
 	// CSV headers
 	output << "sha;files modified;hunks modified;lines added;lines removed;lines modified;"
-	       << "commit time;number of parents;author;committer\n";
+	       << "commit time;offset;number of parents;author;committer\n";
 
 	// Iterate over every commit. Currently this will miss the first commit
 	while ( ! git_revwalk_next(&oid2, walker))
@@ -243,6 +246,7 @@ int main(int argc, char *argv[])
 		{
 			// Gather commit specific data
 			commitStats.time       = git_commit_time(commit1);
+			commitStats.timeOffset = git_commit_time_offset(commit1);
 			commitStats.numParents = git_commit_parentcount(commit1);
 			commitStats.author     = git_commit_author(commit1)->name;
 			commitStats.committer  = git_commit_committer(commit1)->name;
