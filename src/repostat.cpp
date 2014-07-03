@@ -18,6 +18,7 @@ typedef struct diff_data
 	unsigned int lineRemoved;
 	unsigned int file;
 	unsigned int hunk;
+	unsigned int parents;
 
 	~diff_data()
 	{ 
@@ -60,6 +61,8 @@ int each_line_cb(const git_diff_delta *delta, const git_diff_hunk *hunk,
 	diff_data *diffStats = (diff_data*)payload;
 
 	for (size_t i = 0; i < line->content_len; ++i) {
+		//if (diffStats->parents > 1)
+			//std::cout << line->content[i];
 		
 		// Check for common whitespace
 		if (line->content[i] == '\n')
@@ -74,6 +77,8 @@ int each_line_cb(const git_diff_delta *delta, const git_diff_hunk *hunk,
 		// If there is a non whitespace character we
 		//   want to consider the line;
 		whiteSpaceOnly = false;
+
+		//if (diffStats->parents <= 1)
 		break;
 	}
 
@@ -234,24 +239,20 @@ int main(int argc, char *argv[])
 		commitStats.author     = git_commit_author(commit)->name;
 		commitStats.committer  = git_commit_committer(commit)->name;
 
-		for (int i = 0; i < commitStats.numParents; ++i) {
-			git_commit_parent(&parent, commit, i);
-			git_commit_tree(&parent_tree, parent);
+		diffStats.parents = commitStats.numParents;
 
-			// Do a diff between the two trees and create a patch
-			git_diff_tree_to_tree(&diff, repo, commit_tree, parent_tree, &opts);
-			// Iterate through each delta within the diff to get file, line, and
-		
-			// hunk info.  Note that this does not skip over merge commits, but
-			// it's not gauraunteed to return the correct information for certain
-			// merge commits.
-			if (git_diff_foreach(diff, each_file_cb, each_hunk_cb, each_line_cb, &diffStats))
-				std::cerr << "\nDiff error on sha: " << diffStats.diff_id << "!\n";
+		git_commit_parent(&parent, commit, 0);
+		git_commit_tree(&parent_tree, parent);
 
-			git_commit_free(parent);
-			git_tree_free(parent_tree);
-			git_diff_free(diff);
-		}
+		// Do a diff between the two trees and create a patch
+		git_diff_tree_to_tree(&diff, repo, commit_tree, parent_tree, &opts);
+		// Iterate through each delta within the diff to get file, line, and
+	
+		// hunk info.  Note that this does not skip over merge commits, but
+		// it's not gauraunteed to return the correct information for certain
+		// merge commits.
+		if (git_diff_foreach(diff, each_file_cb, each_hunk_cb, each_line_cb, &diffStats))
+			std::cerr << "\nDiff error on sha: " << diffStats.diff_id << "!\n";
 
 		writeToCSV(output, diffStats, commitStats);
 		//outputToTerminal(diffStats, commitStats);
@@ -262,6 +263,9 @@ int main(int argc, char *argv[])
 		// Clean up memory
 		git_commit_free(commit);
 		git_tree_free(commit_tree);
+		git_commit_free(parent);
+		git_tree_free(parent_tree);
+		git_diff_free(diff);
 	}
 
 	// Clean up memory
