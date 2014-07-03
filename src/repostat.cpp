@@ -184,12 +184,11 @@ int main(int argc, char *argv[])
 	git_revwalk_push_head(walker);  // Returns Error Code
 	git_revwalk_sorting(walker, GIT_SORT_TOPOLOGICAL);
 
-	git_oid oid1;
-	git_oid oid2;
-	git_commit *commit1;
-	git_commit *commit2;
-	git_tree *tree1;
-	git_tree *tree2;
+	git_oid oid;
+	git_commit *commit;
+	git_commit *parent;
+	git_tree *commit_tree;
+	git_tree *parent_tree;
 	git_diff *diff;
 	git_diff_options opts = GIT_DIFF_OPTIONS_INIT;
 
@@ -201,9 +200,6 @@ int main(int argc, char *argv[])
 
 	// Turn off context to only get modified lines
 	opts.context_lines = 0;
-
-	// Grab the first object ID
-	git_revwalk_next(&oid1, walker);
 
 	// Create unique output file to place resulting repository history
 	std::ofstream output( filename(path).c_str() );
@@ -219,56 +215,53 @@ int main(int argc, char *argv[])
 	       << "commit time;offset;number of parents;author;committer\n";
 
 	// Iterate over every commit. Currently this will miss the first commit
-	while ( ! git_revwalk_next(&oid2, walker))
+	while ( ! git_revwalk_next(&oid, walker))
 	{
 		// Seup the structs for the data we care about
 		diff_data diffStats = {};
 		commit_data commitStats = {};
 
-		diffStats.diff_id = git_oid_allocfmt(&oid1);
+		diffStats.diff_id = git_oid_allocfmt(&oid);
 
-		// Lookup this commit and the parent
-		git_commit_lookup(&commit1, repo, &oid1);
-		git_commit_lookup(&commit2, repo, &oid2);
+		// Lookup this commit
+		git_commit_lookup(&commit, repo, &oid);
+		git_commit_tree(&commit_tree, commit);
 
-		// Lookup the tree for each commit
-		git_commit_tree(&tree1, commit1);
-		git_commit_tree(&tree2, commit2);
+		// Get commit specific data
+		commitStats.time       = git_commit_time(commit);
+		commitStats.timeOffset = git_commit_time_offset(commit);
+		commitStats.numParents = git_commit_parentcount(commit);
+		commitStats.author     = git_commit_author(commit)->name;
+		commitStats.committer  = git_commit_committer(commit)->name;
 
-		// Do a diff between the two trees and create a patch
-		git_diff_tree_to_tree(&diff, repo, tree1, tree2, &opts);
+		for (int i = 0; i < commitStats.numParents; ++i) {
+			git_commit_parent(&parent, commit, i);
+			git_commit_tree(&parent_tree, parent);
 
-		// Iterate through each delta within the diff to get file, line, and
-		// hunk info.  Note that this does not skip over merge commits, but
-		// it's not gauraunteed to return the correct information for certain
-		// merge commits.
-		if ( ! git_diff_foreach(diff, each_file_cb, each_hunk_cb, each_line_cb, &diffStats))
-		{
-			// Gather commit specific data
-			commitStats.time       = git_commit_time(commit1);
-			commitStats.timeOffset = git_commit_time_offset(commit1);
-			commitStats.numParents = git_commit_parentcount(commit1);
-			commitStats.author     = git_commit_author(commit1)->name;
-			commitStats.committer  = git_commit_committer(commit1)->name;
+			// Do a diff between the two trees and create a patch
+			git_diff_tree_to_tree(&diff, repo, commit_tree, parent_tree, &opts);
+			// Iterate through each delta within the diff to get file, line, and
+		
+			// hunk info.  Note that this does not skip over merge commits, but
+			// it's not gauraunteed to return the correct information for certain
+			// merge commits.
+			if (git_diff_foreach(diff, each_file_cb, each_hunk_cb, each_line_cb, &diffStats))
+				std::cerr << "\nDiff error on sha: " << diffStats.diff_id << "!\n";
 
-			writeToCSV(output, diffStats, commitStats);
-			//outputToTerminal(diffStats, commitStats);
-		}
-		else
-		{
-			std::cerr << "\nDiff error on sha: " << diffStats.diff_id << "!\n";
+			git_commit_free(parent);
+			git_tree_free(parent_tree);
+			git_diff_free(diff);
 		}
 
-		// Move to the next object ID
-		oid1 = oid2;
+		writeToCSV(output, diffStats, commitStats);
+		//outputToTerminal(diffStats, commitStats);
+
+		// Update Progress
 		progressBarUpdate();
 
 		// Clean up memory
-		git_commit_free(commit1);
-		git_commit_free(commit2);
-		git_tree_free(tree1);
-		git_tree_free(tree2);
-		git_diff_free(diff);
+		git_commit_free(commit);
+		git_tree_free(commit_tree);
 	}
 
 	// Clean up memory
