@@ -34,6 +34,7 @@ typedef struct commit_data
 	unsigned int numParents;
 	char* author;
 	char* committer;
+	const char* msg;
 } commit_data;
 
 int each_file_cb(const git_diff_delta *delta, float progress, void *payload)
@@ -142,7 +143,8 @@ void writeToCSV(std::ofstream& output, const diff_data& diffStats,
 	       << commitStats.timeOffset << ";"
 	       << commitStats.numParents << ";"
 	       << commitStats.author << ";"
-	       << commitStats.committer << "\n";
+	       << commitStats.committer << ";"
+	       << commitStats.msg << "\n";
 }
 
 void outputToTerminal(const diff_data& diffStats, const commit_data& commitStats)
@@ -158,6 +160,7 @@ void outputToTerminal(const diff_data& diffStats, const commit_data& commitStats
 	          << "Parents: " << commitStats.numParents << "\n"
 	          << "Author: " << commitStats.author << "\n"
 	          << "Committer: " << commitStats.committer << "\n"
+	          << "Message: " << commitStats.msg << "\n"
 	          << "--------------------------------------\n";
 }
 
@@ -217,7 +220,7 @@ int main(int argc, char *argv[])
 
 	// CSV headers
 	output << "sha;files modified;hunks modified;lines added;lines removed;lines modified;"
-	       << "commit time;offset;number of parents;author;committer\n";
+	       << "commit time;offset;number of parents;author;committer;message\n";
 
 	// Iterate over every commit. Currently this will miss the first commit
 	while ( ! git_revwalk_next(&oid, walker))
@@ -238,8 +241,14 @@ int main(int argc, char *argv[])
 		commitStats.numParents = git_commit_parentcount(commit);
 		commitStats.author     = git_commit_author(commit)->name;
 		commitStats.committer  = git_commit_committer(commit)->name;
+		diffStats.parents      = commitStats.numParents;
 
-		diffStats.parents = commitStats.numParents;
+		// Replace new lines, quotes, and semicolons from commit message for storage
+		std::string sMessage = std::string(git_commit_message(commit));
+		std::replace( sMessage.begin(), sMessage.end(), '\n', ' ');
+		std::replace( sMessage.begin(), sMessage.end(), ';', '-');
+		std::replace( sMessage.begin(), sMessage.end(), '\"', '\'');
+		commitStats.msg = sMessage.c_str();
 
 		git_commit_parent(&parent, commit, 0);
 		git_commit_tree(&parent_tree, parent);
