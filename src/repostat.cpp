@@ -9,6 +9,7 @@
 #include <time.h>
 #include <libgen.h>
 #include <ctime>
+#include <algorithm>
 
 typedef struct diff_data
 {
