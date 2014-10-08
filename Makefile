@@ -1,6 +1,6 @@
 bin/repostat: src/repostat.cpp
 	mkdir -p bin
-	g++ src/repostat.cpp -Wall -I/usr/local/include -o bin/repostat
+	g++ src/repostat.cpp -Wall -lgit2 -o bin/repostat
 
 .PHONY: clean
 clean:

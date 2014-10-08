@@ -21,6 +21,13 @@ typedef struct diff_data
 	unsigned int hunk;
 	unsigned int parents;
 
+	#ifdef __APPLE__
+	~diff_data()		
+	{ 		
+		if (diff_id) free(diff_id);		
+	}
+	#endif
+
 } diff_data;
 
 typedef struct commit_data
@@ -225,7 +232,11 @@ int main(int argc, char *argv[])
 		diff_data diffStats = {};
 		commit_data commitStats = {};
 
-		diffStats.diff_id = git_oid_tostr_s(&oid);
+		#ifdef __APPLE__
+			diffStats.diff_id = git_oid_allocfmt(&oid);
+		#else
+			diffStats.diff_id = git_oid_tostr_s(&oid);
+		#endif
 
 		// Lookup this commit
 		git_commit_lookup(&commit, repo, &oid);
