@@ -2,7 +2,7 @@
 	@brief Collects metrics on the commit history of a repository
 */
 
-#include <git2.h>
+#include "git2.h"
 #include <iostream>
 #include <fstream>
 #include <sstream>
