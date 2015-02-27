@@ -44,17 +44,22 @@ int main(int argc, char *argv[])
 
 	git_oid oid;
 	git_commit *commit;
-	git_commit *parent;
-	git_tree *commit_tree;
-	git_tree *parent_tree;
+	//git_commit *parent;
+	//git_tree *commit_tree;
+	//git_tree *parent_tree;
 
 	// Iterate over every commit. Currently this will miss the first commit
 	while ( ! git_revwalk_next(&oid, walker))
 	{
 		git_commit_lookup(&commit, repo, &oid);
-		git_commit_tree(&commit_tree, commit);
+		//git_commit_tree(&commit_tree, commit);
 
 		// Get commit specific data
+		std::cout << "COMMIT:\n";
+		std::cout << git_commit_id(commit) << "\n";
+		std::cout << git_commit_tree_id(commit) << "\n";
+		std::cout << "-----------\n";
+		std::cout << "PARENTS: " << git_commit_parentcount(commit) << "\n";
 		std::cout << git_commit_time(commit) << "\n";
 		std::cout << git_commit_time_offset(commit) << "\n";
 		std::cout << git_commit_parentcount(commit) << "\n";
@@ -68,14 +73,14 @@ int main(int argc, char *argv[])
 		std::replace( sMessage.begin(), sMessage.end(), '\"', '\'');
 		std::cout << sMessage.c_str() << "\n";
 
-		git_commit_parent(&parent, commit, 0);
-		git_commit_tree(&parent_tree, parent);
+		//git_commit_parent(&parent, commit, 0);
+		//git_commit_tree(&parent_tree, parent);
 
 		// Clean up memory
 		git_commit_free(commit);
-		git_tree_free(commit_tree);
-		git_commit_free(parent);
-		git_tree_free(parent_tree);
+		//git_tree_free(commit_tree);
+		//git_commit_free(parent);
+		//git_tree_free(parent_tree);
 	}
 
 	// Clean up memory
