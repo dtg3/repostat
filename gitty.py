@@ -54,11 +54,12 @@ for line in output:
 
 	# merge
 	if len(parents) >= 2:
-		for parent in parents:
-			gwrite(graph, child, parent, 1)
-			if parent in cache:
-				gwrite(graph, cache[parent].child, cache[parent].weight)
+		for p in parents:
+			gwrite(graph, child, p, 1)
+			if p in cache:
+				gwrite(graph, cache[p].child, cache[p].weight)
 
+	# branch
 
 
 graph.write('}\n')
