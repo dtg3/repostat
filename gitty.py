@@ -53,6 +53,9 @@ for line in output:
 		if p:
 			dp[p].append(child)
 			dc[child].append(p)
+		else:
+			dp["NULL"].append(child)
+			dc[child].append("NULL")
 
 # cache of unwritted linear squashes (farthest parent -> original child, weight)
 cache = dict()
