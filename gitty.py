@@ -67,6 +67,10 @@ for line in output:
 	child = SHAS[0]
 	parents = SHAS[1:]
 
+	# TODO: missing something here, or writing something the wrong way.
+	# the graph is all goofy, and nodes point to nodes they shouldn't.
+	# investigate.
+
 	is_branch = False
 	for p in parents:
 		if len(d[p]) > 1:
