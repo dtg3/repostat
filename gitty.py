@@ -24,6 +24,8 @@ for line in output:
 		if p:
 			d[p].append(child)
 
+# cache of unwritted linear squashes (farthest parent -> original child, weight)
+cache = dict()
 
 graph = open("graph.dot", "wb")
 graph.write('digraph G {\n')
@@ -45,3 +47,17 @@ for line in output:
 graph.write('}\n')
 graph.close()
 
+
+# edges used for squashing linear branches
+class Edge(object):
+	_parent = ""
+	_weight = 0
+
+	def fget(self):
+		return self._parent, self._weight
+	def fset(self, parent, weight):
+		self._parent = parent
+		self._weight = weight
+	def fdel(self):
+		del self._parent
+		del self._weight
