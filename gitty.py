@@ -40,7 +40,8 @@ args = parser.parse_args()
 
 # first traversal for mapping parent/child relationship to build up a tree
 output = subprocess.check_output(['git', '--git-dir', args.repository + '/.git', 'log', '--branches', '--pretty=format:"%H %P"']).splitlines()
-d = defaultdict(list)
+dp = defaultdict(list) # dictionary where keys are parent commits
+dc = defaultdict(list) # dictionary where keys are child commits
 
 for line in output:
 	SHAS = line.strip("\"").split(' ')
@@ -50,7 +51,8 @@ for line in output:
 
 	for p in parents:
 		if p:
-			d[p].append(child)
+			dp[p].append(child)
+			dc[child].append(p)
 
 # cache of unwritted linear squashes (farthest parent -> original child, weight)
 cache = dict()
@@ -73,7 +75,7 @@ for line in output:
 
 	is_branch = False
 	for p in parents:
-		if len(d[p]) > 1:
+		if len(dp[p]) > 1:
 			is_branch = True
 
 	is_init = False
@@ -82,7 +84,7 @@ for line in output:
 			is_init = True
 
 	is_linear = False
-	if len(parents) == 1 and len(d[parents[0]]) == 1:
+	if len(parents) == 1 and len(dp[parents[0]]) == 1:
 		is_linear = True
 
 	# merge
