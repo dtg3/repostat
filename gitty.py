@@ -15,10 +15,15 @@ graph.write('\trankdir="BT"\n')
 
 output = subprocess.check_output(['git', '--git-dir', args.repository + '/.git', 'log', '--branches', '--pretty=format:"%H %P"']).splitlines()
 for line in output:
-	if not 'commit' in line.strip().strip("\""):
-		SHAS = line.strip().strip("\"").split(' ')
-		for sha in SHAS[1:]:
-			graph.write('\t\"' + SHAS[0] + '\"->\"' + sha + '\";\n')
+	SHAS = line.strip("\"").split(' ')
+
+	child = SHAS[0]
+	parents = SHAS[1:]
+
+	for parent in parents:
+		if parent:
+			print child + " -> " + parent
+			graph.write('\t"' + child + '" -> "' + parent + '";\n')
 
 graph.write('}\n')
 graph.close()
