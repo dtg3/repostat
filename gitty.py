@@ -5,6 +5,16 @@ import subprocess
 import argparse
 from collections import defaultdict
 
+# write to dot graph
+def gwrite(graph, child, parent, weight):
+	if weight <= 1:
+		graph.write('\t"' + parent + '" -> "' + child + '";\n')
+	else:
+		graph.write('\t"' + parent + '" -> "' + child + '" [label="' + weight + '"];\n')
+
+
+
+# main
 parser = argparse.ArgumentParser()
 parser.add_argument('repository')
 args = parser.parse_args()
@@ -39,6 +49,8 @@ for line in output:
 	child = SHAS[0]
 	parents = SHAS[1:]
 
+
+
 	for parent in parents:
 		if parent:
 			graph.write('\t"' + child + '" -> "' + parent + '";\n')
@@ -46,6 +58,7 @@ for line in output:
 
 graph.write('}\n')
 graph.close()
+
 
 
 # edges used for squashing linear branches
