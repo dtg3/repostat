@@ -12,8 +12,24 @@ def gwrite(graph, child, parent, weight):
 	elif weight <= 1:
 		graph.write('\t"' + parent + '" -> "' + child + '";\n')
 	else:
-		graph.write('\t"' + parent + '" -> "' + child + '" [label="' + weight + '"];\n')
+		graph.write('\t"' + parent + '" -> "' + child + '" [label="' + str(weight) + '"];\n')
 
+# edges used for squashing linear branches
+class Edge(object):
+	_child = ""
+	_weight = 0
+
+	def __init__(self, child, weight):
+		self._child = child
+		self._weight = weight
+	def fget(self):
+		return self._child, self._weight
+	def fset(self, parent, weight):
+		self._child = child
+		self._weight = weight
+	def fdel(self):
+		del self._child
+		del self._weight
 
 
 # main
@@ -61,12 +77,16 @@ for line in output:
 		if not p:
 			is_init = True
 
+	is_linear = False
+	if len(parents) == 1 and len(d[parents[0]]) == 1:
+		is_linear = True
+
 	# merge
 	if len(parents) >= 2:
 		for p in parents:
 			gwrite(graph, child, p, 1)
 			if p in cache:
-				gwrite(graph, cache[p].child, cache[p].weight)
+				gwrite(graph, cache[p]._child, cache[p]._weight)
 				del cache[p]
 
 	# branch
@@ -74,7 +94,7 @@ for line in output:
 		for p in parents:
 			gwrite(graph, child, p, 1)
 			if p in cache:
-				gwrite(graph, cache[p].child, cache[p].weight)
+				gwrite(graph, cache[p]._child, cache[p]._weight)
 				del cache[p]
 
 	# init
@@ -82,25 +102,28 @@ for line in output:
 		for p in parents:
 			gwrite(graph, child, p, 1)
 			if p in cache:
-				gwrite(graph, cache[p].child, cache[p].weight)
+				gwrite(graph, cache[p]._child, cache[p]._weight)
 				del cache[p]
 
+	# linear
+	elif is_linear:
+		p = parents[0]
+		if child in cache:
+			cache[p] = Edge(cache[child]._child, cache[child]._weight + 1)
+			del cache[child]
+		else:
+			cache[p] = Edge(child, 1)
+
+	# wtf
+	else:
+		print "ABORT! AHH! JUMP SHIP!"
+
+
+# write anything left remaining in the cache
+for key in cache:
+	gwrite(graph, key, cache[key]._child, cache[key]._weight)
 
 graph.write('}\n')
 graph.close()
 
 
-
-# edges used for squashing linear branches
-class Edge(object):
-	_child = ""
-	_weight = 0
-
-	def fget(self):
-		return self._child, self._weight
-	def fset(self, parent, weight):
-		self._child = child
-		self._weight = weight
-	def fdel(self):
-		del self._child
-		del self._weight
