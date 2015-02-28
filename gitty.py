@@ -7,7 +7,9 @@ from collections import defaultdict
 
 # write to dot graph
 def gwrite(graph, child, parent, weight):
-	if weight <= 1:
+	if not parent:
+		graph.write('\t"NULL" -> "' + child + '";\n')
+	elif weight <= 1:
 		graph.write('\t"' + parent + '" -> "' + child + '";\n')
 	else:
 		graph.write('\t"' + parent + '" -> "' + child + '" [label="' + weight + '"];\n')
@@ -49,6 +51,11 @@ for line in output:
 	child = SHAS[0]
 	parents = SHAS[1:]
 
+
+	# merge
+	if len(parents) >= 2:
+		for parent in parents:
+			gwrite(graph, child, parent, 1)
 
 
 	for parent in parents:
