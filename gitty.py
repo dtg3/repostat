@@ -56,6 +56,10 @@ for line in output:
 		if len(d[p]) > 1:
 			is_branch = True
 
+	is_init = False
+	for p in parents:
+		if not p:
+			is_init = True
 
 	# merge
 	if len(parents) >= 2:
@@ -73,6 +77,13 @@ for line in output:
 				gwrite(graph, cache[p].child, cache[p].weight)
 				del cache[p]
 
+	# init
+	elif is_init:
+		for p in parents:
+			gwrite(graph, child, p, 1)
+			if p in cache:
+				gwrite(graph, cache[p].child, cache[p].weight)
+				del cache[p]
 
 
 graph.write('}\n')
