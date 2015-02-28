@@ -51,6 +51,11 @@ for line in output:
 	child = SHAS[0]
 	parents = SHAS[1:]
 
+	is_branch = False
+	for p in parents:
+		if len(d[p]) > 1:
+			is_branch = True
+
 
 	# merge
 	if len(parents) >= 2:
@@ -58,8 +63,16 @@ for line in output:
 			gwrite(graph, child, p, 1)
 			if p in cache:
 				gwrite(graph, cache[p].child, cache[p].weight)
+				del cache[p]
 
 	# branch
+	elif is_branch:
+		for p in parents:
+			gwrite(graph, child, p, 1)
+			if p in cache:
+				gwrite(graph, cache[p].child, cache[p].weight)
+				del cache[p]
+
 
 
 graph.write('}\n')
