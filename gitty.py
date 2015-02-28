@@ -56,11 +56,9 @@ for line in output:
 	if len(parents) >= 2:
 		for parent in parents:
 			gwrite(graph, child, parent, 1)
+			if parent in cache:
+				gwrite(graph, cache[parent].child, cache[parent].weight)
 
-
-	for parent in parents:
-		if parent:
-			graph.write('\t"' + child + '" -> "' + parent + '";\n')
 
 
 graph.write('}\n')
@@ -70,14 +68,14 @@ graph.close()
 
 # edges used for squashing linear branches
 class Edge(object):
-	_parent = ""
+	_child = ""
 	_weight = 0
 
 	def fget(self):
-		return self._parent, self._weight
+		return self._child, self._weight
 	def fset(self, parent, weight):
-		self._parent = parent
+		self._child = child
 		self._weight = weight
 	def fdel(self):
-		del self._parent
+		del self._child
 		del self._weight
