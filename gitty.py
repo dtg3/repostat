@@ -5,6 +5,16 @@ import subprocess
 import argparse
 from collections import defaultdict
 
+def init_graph():
+	graph = open("graph.dot", "wb")
+	graph.write('digraph G {\n')
+	graph.write('\trankdir="BT"\n')
+	return graph
+
+def end_graph(graph):
+	graph.write('}\n')
+	graph.close()
+
 # write to dot graph
 def gwrite(graph, child, parent, weight):
 	if not parent:
@@ -26,9 +36,10 @@ def is_orphan(sha):
 	return len(dp[sha]) < 1 # has no parents
 
 def is_init(sha):
-	return sha == "NULL"
+	return sha == "NULL"    # first commit
 
 def is_linear(sha):
+	# todo: this may be wrong
 	return not is_init(sha) and not is_merge(sha) and not is_branch(sha)
 
 def is_force_write(sha):
@@ -37,12 +48,33 @@ def is_force_write(sha):
 def force_write(sha):
 	commits[sha]._write = True
 
+def is_any_parent_force_write(sha):
+	for p in dc[sha]:
+		if commits[sha]._write:
+			return True
+	return False
+
+def is_squishable(sha):
+	# todo: implement
+	return False
+
+
+def debug_what_am_i(sha):
+	if is_branch(sha):
+		print sha + " is branch!"
+	if is_merge(sha):
+		print sha + " is merge!"
+	if is_init(sha):
+		print sha + " is init!"
+	if is_orphan(sha):
+		print sha + " is orphan!"
+	if is_linear(sha):
+		print sha + " is linear!"
 
 # data used for tracking commits
 class Data(object):
 	def __init__(self):
 		self._write = False
-		self._weight = 0
 
 
 # edges used for squashing linear branches
@@ -50,8 +82,8 @@ class Edge(object):
 	_parent = ""
 	_weight = 0
 
-	def __init__(self, child, weight):
-		self._parent = child
+	def __init__(self, p, weight):
+		self._parent = p
 		self._weight = weight
 	def fdel(self):
 		del self._parent
@@ -68,7 +100,7 @@ args = parser.parse_args()
 output = subprocess.check_output(['git', '--git-dir', args.repository + '/.git', 'log', '--branches', '--pretty=format:"%h %p"']).splitlines()
 dp = defaultdict(list) # dictionary where keys are parent commits
 dc = defaultdict(list) # dictionary where keys are child commits
-commits = {}
+commits = {}           # dictionary of all commits, whether they should be written
 
 commits["NULL"] = Data()
 for line in output:
@@ -86,41 +118,25 @@ for line in output:
 			dp["NULL"].append(child)
 			dc[child].append("NULL")
 
-# cache of unwritted linear squashes (farthest parent -> original child, weight)
-cache = dict()
+cache = dict() # cache of unwritted linear squashes (farthest parent -> original child, weight)
+graph = init_graph() # dot graph
 
-graph = open("graph.dot", "wb")
-graph.write('digraph G {\n')
-graph.write('\trankdir="BT"\n')
-
-# re-traverse for writing to the file, starting with the first commit
+# re-traverse for writing to the file, starting with the first commit using BFS
 visited, queue = set(), ["NULL"]
 while queue:
 	node = queue.pop(0)
-	print "CHECKING " + node
 	if node not in visited:
 		visited.add(node)
 
-		if is_branch(node) or is_merge(node) or is_init(node) or is_orphan(node):
+		debug_what_am_i(node)
 
-			if is_branch(node):
-				print node + " is branch!"
-			elif is_merge(node):
-				print node + " is merge!"
-				for parent in dc[node]:
-					if parent in cache:
-						print "parent is linear!"
-						gwrite(graph, parent, cache[parent]._parent, cache[parent]._weight)
-						del cache[parent]
-					gwrite(graph, node, parent, 1)
-			elif is_init(node):
-				print node + " is init!"
-			elif is_orphan(node):
-				print node + " is orphan!"
-			force_write(node)
+		# todo: squish
+		force_write(node)
 
-		
-		if not is_init(node):
+		#if is_branch(node) or is_merge(node) or is_init(node) or is_orphan(node):
+		#	force_write(node)
+
+		if is_squishable(node):
 			parent = dc[node][0]
 			if parent in cache:
 				temp = cache[parent]
@@ -130,28 +146,18 @@ while queue:
 				cache[node] = Edge(node, 0)
 			print "squishing " + node + " to " + cache[node]._parent + " with weight " + str(cache[node]._weight)
 
-			print node + " is linear! parent is: " + cache[node]._parent
-
-			if is_branch(node):
-				gwrite(graph, node, cache[node]._parent, cache[node]._weight)
-				del cache[node]
 
 		# then visit the children of this commit
 		for n in dp[node]:
 			queue.append(n)
-		print "queue is now at: " + str(queue)
 
-	else:
-		print node + " has been checked already"
-
+# write out only those commits that we marked should be written
 for c in commits:
 	if commits[c]._write:
 		for child in dp[c]:
 			gwrite(graph, child, c, 1)
 	elif c in cache:
-		#print "squishing " + cache[c]._parent + " to " + c + " with weight " + str(cache[c]._weight)
 		gwrite(graph, c, cache[c]._parent, cache[c]._weight)
 
-graph.write('}\n')
-graph.close()
+end_graph(graph)
 
