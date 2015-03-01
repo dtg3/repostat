@@ -43,30 +43,7 @@ def is_linear(sha):
 
 # pre-condition: sha is linear
 def is_first_linear(sha):
-	return not is_linear(dc[sha][0])
-
-def is_force_write(sha):
-	return commits[sha]._write
-
-def force_write(sha):
-	commits[sha]._write = True
-
-def is_any_parent_force_write(sha):
-	for p in dc[sha]:
-		if commits[sha]._write:
-			return True
-	return False
-
-def is_squishable(sha):
-	# todo: implement
-	return False
-
-#def identify(sha):
-#	if is_branch(sha):
-#		commits[sha]._type = 'b'
-#	if is_merge(sha):
-#		commits[sha].
-
+	return not is_linear(dc[sha][0]) # if parent isn't linear
 
 def debug_what_am_i(sha):
 	if is_branch(sha):
@@ -80,14 +57,8 @@ def debug_what_am_i(sha):
 	if is_linear(sha):
 		print sha + " is linear!"
 
-# data used for tracking commits
-class Data(object):
-	def __init__(self):
-		self._write = False
-		self._type = ''
 
-
-# edges used for squashing linear branches
+# edges used for squishing linear branches
 class Edge(object):
 	_parent = ""
 	_weight = 1
@@ -110,17 +81,13 @@ args = parser.parse_args()
 output = subprocess.check_output(['git', '--git-dir', args.repository + '/.git', 'log', '--branches', '--pretty=format:"%h %p"']).splitlines()
 dp = defaultdict(list) # dictionary where keys are parent commits
 dc = defaultdict(list) # dictionary where keys are child commits
-commits = {}           # dictionary of all commits, whether they should be written
 
-commits["NULL"] = Data()
-commits["NULL"]._write = True
 for line in output:
 	SHAS = line.strip("\"").split(' ')
 
 	child = SHAS[0]
 	parents = SHAS[1:]
 
-	commits[child] = Data()
 	for p in parents:
 		if p:
 			dp[p].append(child)
@@ -141,16 +108,12 @@ while queue:
 
 		debug_what_am_i(node)
 
-		#if is_branch(node) or is_merge(node) or is_init(node) or is_orphan(node):
-			#force_write(node)
-
 		if is_linear(node):
 			parent = dc[node][0]
 			if is_first_linear(node):
 				# create edge from parent ending at current node, weight = 1
+				# remove old edge, put new edge ending at this commit (no op)
 				cache[node] = Edge(parent, 1)
-
-				# remove old edge, put new edge ending at this commit (no change)
 
 			else:
 				# extend parent's squished parent to end at current node, weight + 1
@@ -176,7 +139,7 @@ while queue:
 		# for all children of this commit
 		for child in dp[node]:
 
-			# draw edge in graph
+			# draw edge in graph from parent (node) to child
 			weight = 1
 			if child in cache:
 				weight = cache[child]._weight
