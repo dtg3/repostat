@@ -5,8 +5,8 @@ import subprocess
 import argparse
 from collections import defaultdict
 
-def init_graph():
-	graph = open("graph.dot", "wb")
+def init_graph(outputFile):
+	graph = open(outputFile, "wb")
 	graph.write('digraph G {\n')
 	graph.write('\trankdir="BT"\n')
 	return graph
@@ -74,7 +74,9 @@ class Edge(object):
 # main
 parser = argparse.ArgumentParser()
 parser.add_argument('repository')
+parser.add_argument('-o','--output', type=str, default="graph.dot")
 args = parser.parse_args()
+
 
 
 # first traversal for mapping parent/child relationship to build up a tree
@@ -97,7 +99,7 @@ for line in output:
 			dc[child].append("NULL")
 
 cache = dict() # cache of unwritted linear squashes (farthest parent -> original child, weight)
-graph = init_graph() # dot graph
+graph = init_graph(args.output) # dot graph
 
 # re-traverse for marking what to write to the file, starting with the first commit using BFS
 visited, queue = set(), ["NULL"]
