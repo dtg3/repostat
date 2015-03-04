@@ -134,5 +134,6 @@ while queue:
 
 end_graph(graph)
 
-gitshell.diff(args.repository, "58690a4", "84336af5acf96809ff87e31753f22d2dde3b4de4")
+#Example of gitshell.diff usage
+#gitshell.diff(args.repository, "58690a4", "84336af5acf96809ff87e31753f22d2dde3b4de4")
 
