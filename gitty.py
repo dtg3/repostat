@@ -1,9 +1,8 @@
 #!/usr/bin/python
 
 #run me from the git repo root
-import subprocess
 import argparse
-from collections import defaultdict
+import gitshell
 
 def init_graph(outputFile):
 	graph = open(outputFile, "wb")
@@ -78,25 +77,8 @@ parser.add_argument('-o','--output', type=str, default="graph.dot")
 args = parser.parse_args()
 
 
-
 # first traversal for mapping parent/child relationship to build up a tree
-output = subprocess.check_output(['git', '--git-dir', args.repository + '/.git', 'log', '--branches', '--pretty=format:"%h %p"']).splitlines()
-dp = defaultdict(list) # dictionary where keys are parent commits
-dc = defaultdict(list) # dictionary where keys are child commits
-
-for line in output:
-	SHAS = line.strip("\"").split(' ')
-
-	child = SHAS[0]
-	parents = SHAS[1:]
-
-	for p in parents:
-		if p:
-			dp[p].append(child)
-			dc[child].append(p)
-		else:
-			dp["NULL"].append(child)
-			dc[child].append("NULL")
+dp, dc = gitshell.buildCommitDicts(args.repository)
 
 cache = dict() # cache of unwritted linear squashes (farthest parent -> original child, weight)
 graph = init_graph(args.output) # dot graph
