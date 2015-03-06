@@ -23,6 +23,20 @@ def gwrite(graph, child, parent, weight):
 	elif weight > 1:
 		graph.write('\t"' + parent + '" -> "' + child + '" [label="' + str(weight) + '"];\n')
 
+def init_csv(filename):
+	csv = open(filename, 'w')
+	csv.write('merge-base,child,file,lines-added,line-removed,hunks\n')
+	return csv
+
+def write_csv(diffstats, csvfile):
+	if args.csv:
+		for key in diffstat.keys():
+			csvfile.write(node + ',' + child + ',' + key)
+
+			for item in diffstat[key]:
+				csvfile.write(',' + item)
+			csvfile.write('\n')
+
 
 # going bottom (first commit ever) up (most recent)
 def is_branch(sha):
@@ -74,6 +88,7 @@ class Edge(object):
 parser = argparse.ArgumentParser()
 parser.add_argument('repository')
 parser.add_argument('-o','--output', type=str, default="graph.dot")
+parser.add_argument('-csv', type=str, default="linear-paths.csv")
 args = parser.parse_args()
 
 
@@ -114,6 +129,7 @@ while queue:
 			queue.append(n)
 
 # re-traverse squished graph to write to file
+csvfile = init_csv(args.csv)
 visited, queue = set(), ["NULL"]
 while queue:
 	node = queue.pop(0)
@@ -130,10 +146,7 @@ while queue:
 
 				# print diff for linear paths
 				diffstat = gitshell.diff(args.repository, node, child)
-				for key in diffstat.keys():
-					print key
-					for item in diffstat[key]:
-						print item
+				write_csv(diffstat, csvfile)
 
 			gwrite(graph, child, node, weight)
 
@@ -141,4 +154,5 @@ while queue:
 			queue.append(child)
 
 end_graph(graph)
+csvfile.close()
 
