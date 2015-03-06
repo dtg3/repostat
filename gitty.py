@@ -97,6 +97,7 @@ dp, dc = gitshell.buildCommitDicts(args.repository)
 
 cache = dict() # cache of unwritted linear squashes (farthest parent -> original child, weight)
 graph = init_graph(args.output) # dot graph
+csvfile = init_csv(args.csv)    # csv file with data on linear paths
 
 # re-traverse for marking what to write to the file, starting with the first commit using BFS
 visited, queue = set(), ["NULL"]
@@ -129,7 +130,6 @@ while queue:
 			queue.append(n)
 
 # re-traverse squished graph to write to file
-csvfile = init_csv(args.csv)
 visited, queue = set(), ["NULL"]
 while queue:
 	node = queue.pop(0)
