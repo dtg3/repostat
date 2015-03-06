@@ -127,13 +127,18 @@ while queue:
 			weight = 1
 			if child in cache:
 				weight = cache[child]._weight
+
+				# print diff for linear paths
+				diffstat = gitshell.diff(args.repository, node, child)
+				for key in diffstat.keys():
+					print key
+					for item in diffstat[key]:
+						print item
+
 			gwrite(graph, child, node, weight)
 
 			# visit
 			queue.append(child)
 
 end_graph(graph)
-
-#Example of gitshell.diff usage
-#gitshell.diff(args.repository, "58690a4", "84336af5acf96809ff87e31753f22d2dde3b4de4")
 
