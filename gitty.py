@@ -45,14 +45,17 @@ def is_branch(sha):
 def is_merge(sha):
 	return len(dc[sha]) > 1 # child has more than one parent
 
-def is_orphan(sha):
+def is_bare(sha):
 	return len(dp[sha]) < 1 # has no parents
 
-def is_init(sha):
+def is_orphan(sha):
+	# todo: we /assume/ it's the first commit, but really it's just a commit
+	# with no parents. there can be multiple commits like this in a repo. need
+	# a better method of detection
 	return sha == "NULL"    # first commit
 
 def is_linear(sha):
-	return not is_init(sha) and not is_merge(sha) and not is_branch(sha)
+	return not is_orphan(sha) and not is_merge(sha) and not is_branch(sha)
 
 # pre-condition: sha is linear
 def is_first_linear(sha):
@@ -63,9 +66,9 @@ def debug_what_am_i(sha):
 		print sha + " is branch!"
 	if is_merge(sha):
 		print sha + " is merge!"
-	if is_init(sha):
-		print sha + " is init!"
 	if is_orphan(sha):
+		print sha + " is init!"
+	if is_bare(sha):
 		print sha + " is orphan!"
 	if is_linear(sha):
 		print sha + " is linear!"
