@@ -163,6 +163,3 @@ csvfile.close()
 
 if args.svg:
 	dotter.draw_graph(args.output, args.svg)
-
-#Example of gitshell.diff usage
-#gitshell.diff(args.repository, "58690a4", "84336af5acf96809ff87e31753f22d2dde3b4de4")
