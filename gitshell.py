@@ -1,7 +1,7 @@
 import subprocess
 from collections import defaultdict
 
-def buildCommitDicts(repoPath):
+def build_commit_dicts(repoPath):
 	output = subprocess.check_output(['git', '--git-dir', repoPath + '/.git', 'log', '--branches', '--pretty=format:"%h %p"']).splitlines()
 	dp = defaultdict(list) # dictionary where keys are parent commits
 	dc = defaultdict(list) # dictionary where keys are child commits

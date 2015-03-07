@@ -3,6 +3,7 @@
 #run me from the git repo root
 import argparse
 import gitshell
+import dotter
 
 def init_graph(outputFile):
 	graph = open(outputFile, "wb")
@@ -90,13 +91,14 @@ class Edge(object):
 # main
 parser = argparse.ArgumentParser()
 parser.add_argument('repository')
+parser.add_argument('-s','--svg', type=str)
 parser.add_argument('-o','--output', type=str, default="graph.dot")
-parser.add_argument('-csv', type=str, default="linear-paths.csv")
+parser.add_argument('-c','--csv', type=str, default="linear-paths.csv")
 args = parser.parse_args()
 
 
 # first traversal for mapping parent/child relationship to build up a tree
-dp, dc = gitshell.buildCommitDicts(args.repository)
+dp, dc = gitshell.build_commit_dicts(args.repository)
 
 cache = dict() # cache of unwritted linear squashes (farthest parent -> original child, weight)
 graph = init_graph(args.output) # dot graph
@@ -159,3 +161,8 @@ while queue:
 end_graph(graph)
 csvfile.close()
 
+if args.svg:
+	dotter.draw_graph(args.output, args.svg)
+
+#Example of gitshell.diff usage
+#gitshell.diff(args.repository, "58690a4", "84336af5acf96809ff87e31753f22d2dde3b4de4")
