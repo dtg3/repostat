@@ -79,10 +79,12 @@ def debug_what_am_i(sha):
 class Edge(object):
 	_parent = ""
 	_weight = 1
+	_nparent = "" # for cases when _parent is NULL
 
-	def __init__(self, p, weight):
+	def __init__(self, p, weight, np):
 		self._parent = p
 		self._weight = weight
+		self._nparent = np
 	def fdel(self):
 		del self._parent
 		del self._weight
@@ -109,24 +111,27 @@ while queue:
 	if node not in visited:
 		visited.add(node)
 
-		debug_what_am_i(node)
+		#debug_what_am_i(node)
 
 		if is_linear(node):
 			parent = dc[node][0]
 			if is_first_linear(node):
 				# create edge from parent ending at current node, weight = 1
 				# remove old edge, put new edge ending at this commit (no op)
-				cache[node] = Edge(parent, 1)
+				cache[node] = Edge(parent, 1, '')
 
 			else:
 				# extend parent's squished parent to end at current node, weight + 1
 				temp = cache[parent]
-				cache[node] = Edge(temp._parent, temp._weight + 1)
+				cache[node] = Edge(temp._parent, temp._weight + 1, temp._nparent)
 				del cache[parent]
 
 				# remove old edge, put new edge ending at this commit
 				dp[temp._parent].remove(parent)
 				dp[temp._parent].append(node)
+
+			if is_orphan(parent):
+				cache[node]._nparent = node
 
 		# then visit the children of this commit
 		for n in dp[node]:
@@ -148,7 +153,11 @@ while queue:
 				weight = cache[child]._weight
 
 				# print diff for linear paths
-				diffstat = gitshell.diff(args.repository, node, child)
+				parent = node
+				if parent == "NULL":
+					parent = cache[child]._nparent
+
+				diffstat = gitshell.diff(args.repository, parent, child)
 				write_csv(diffstat, csvfile)
 
 			gwrite(graph, child, node, weight)

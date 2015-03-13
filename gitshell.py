@@ -26,10 +26,6 @@ def build_commit_dicts(repoPath):
 def diff(repoPath, parentSHA, commitSHA):
 	fileDiffStats = defaultdict(list)  # {"filename" : loc-add, loc-del, hunks}
 
-	# todo: fix for init commit
-	if parentSHA == "NULL":
-		return fileDiffStats
-
 	output = subprocess.check_output(['git', '--git-dir', repoPath + '/.git', 'diff', parentSHA, commitSHA,'--numstat', '--unified=0', '--find-renames']).splitlines()
 	processStat = True  # whether numstat output needs processed
 	totalHunks = 0      # number of hunks modified
