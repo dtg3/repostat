@@ -5,6 +5,7 @@ def build_commit_dicts(repoPath):
 	output = subprocess.check_output(['git', '--git-dir', repoPath + '/.git', 'log', '--branches', '--pretty=format:"%h %p"']).splitlines()
 	dp = defaultdict(list) # dictionary where keys are parent commits
 	dc = defaultdict(list) # dictionary where keys are child commits
+	cache = dict()         # cache of unwritted linear squashes (farthest parent -> original child, weight)
 
 	for line in output:
 		SHAS = line.strip("\"").split(' ')
@@ -20,7 +21,7 @@ def build_commit_dicts(repoPath):
 				dp["NULL"].append(child)
 				dc[child].append("NULL")
 
-	return dp, dc
+	return dp, dc, cache
 
 def diff(repoPath, parentSHA, commitSHA):
 	fileDiffStats = defaultdict(list)  # {"filename" : loc-add, loc-del, hunks}

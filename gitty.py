@@ -98,9 +98,7 @@ args = parser.parse_args()
 
 
 # first traversal for mapping parent/child relationship to build up a tree
-dp, dc = gitshell.build_commit_dicts(args.repository)
-
-cache = dict() # cache of unwritted linear squashes (farthest parent -> original child, weight)
+dp, dc, cache = gitshell.build_commit_dicts(args.repository)
 graph = init_graph(args.output) # dot graph
 csvfile = init_csv(args.csv)    # csv file with data on linear paths
 
