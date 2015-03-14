@@ -1,5 +1,7 @@
 import subprocess
 from collections import defaultdict
+import re
+
 
 def build_commit_dicts(repoPath):
 	output = subprocess.check_output(['git', '--git-dir', repoPath + '/.git', 'log', '--branches', '--pretty=format:"%h %p"']).splitlines()
@@ -23,6 +25,12 @@ def build_commit_dicts(repoPath):
 
 	return dp, dc, cache
 
+
+# pre-compiled regexes used in diff()
+r1 = re.compile(r"([^\{]*)\{?([^\s]*)[\s=>]*([^\}]*)\}?(.*)?") # find "[name/]?[{old => new}]?[/name]?"
+r2 = re.compile('//')                                          # fix up extra '//'s from previous re
+r3 = re.compile(r"[^\s]*\s=>\s(.*)")                           # find "old => new"
+
 def diff(repoPath, parentSHA, commitSHA):
 	fileDiffStats = defaultdict(list)  # {"filename" : loc-add, loc-del, hunks}
 
@@ -37,29 +45,39 @@ def diff(repoPath, parentSHA, commitSHA):
 		if processStat:
 			if not line == "":
 				stat = line.split('\t')
-				fileDiffStats[stat[2]].append(stat[0]) # lines added
-				fileDiffStats[stat[2]].append(stat[1]) # lines removed
+
+				### enter slow-mo.
+				# these regexes are the slowest thing in here so far. it would be ideal
+				# if we could narrow them down into just ONE regex, or even better, to tell
+				# diff that we only want the new name of the file - not both old and new.
+				#
+				# the following takes the file name as provided by --numstat (which, if the
+				# file was renamed/moved, will give you both the old name and the new name)
+				# and makes sure that we only store the new name of the file, as that is what
+				# we use when counting up all the hunks.
+				fileName = r1.sub("\g<1>\g<3>\g<4>", stat[2])
+				fileName = r2.sub('/', fileName) # idk regex D:
+
+				# file was renamed completely, such that there were no "{" or "}"
+				if "=>" in fileName:
+					fileName = r3.sub("\g<1>", fileName)
+				###
+
+				fileDiffStats[fileName].append(stat[0]) # lines added
+				fileDiffStats[fileName].append(stat[1]) # lines removed
+				fileDiffStats[fileName].append("0")     # hunks
 
 			else:
 				processStat = False
 
 		# parse output from unified diff to calculate hunks
 		else:
+			# get filename of current file being diffed
 			if line.startswith("diff"):
+				currentFile = line.split(" ")[3][2:]
 
-				# store hunks from previous file diff
-				if not totalHunks == 0:
-					fileDiffStats[currentFile].append(str(totalHunks))
-					totalHunks = 0
-
-				# get filename of current file being diffed
-				currentFile = line.split(" ")[2][2:]
-
+			# update that file's number of hunks modified as they're encountered
 			if line.startswith("@@"):
-				totalHunks += 1
-
-
-	# store hunks from last file diff
-	fileDiffStats[currentFile].append(str(totalHunks))
+				fileDiffStats[currentFile][2] = str( int(fileDiffStats[currentFile][2]) + 1 )
 
 	return fileDiffStats
