@@ -63,9 +63,12 @@ def diff(repoPath, parentSHA, commitSHA):
 					fileName = r3.sub("\g<1>", fileName)
 				###
 
-				fileDiffStats[fileName].append(stat[0]) # lines added
-				fileDiffStats[fileName].append(stat[1]) # lines removed
-				fileDiffStats[fileName].append("0")     # hunks
+				linesAdded = "0" if "-" in stat[0] else stat[0]
+				linesRemoved = "0" if "-" in stat[1] else stat[1]
+
+				fileDiffStats[fileName].append(linesAdded)
+				fileDiffStats[fileName].append(linesRemoved)
+				fileDiffStats[fileName].append("0") # hunks
 
 			else:
 				processStat = False
