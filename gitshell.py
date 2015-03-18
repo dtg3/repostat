@@ -77,13 +77,10 @@ def diff(repoPath, parentSHA, commitSHA):
 		else:
 			# get filename of current file being diffed
 			if line.startswith("diff"):
-				print line
 				currentFile = line[line.index(" b/") + 3:]
 
 			# update that file's number of hunks modified as they're encountered
 			if line.startswith("@@"):
-				print currentFile + " - " + parentSHA + " - " + commitSHA
-				print fileDiffStats[currentFile]
 				fileDiffStats[currentFile][2] = str( int(fileDiffStats[currentFile][2]) + 1 )
 
 	return fileDiffStats
