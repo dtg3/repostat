@@ -45,6 +45,7 @@ def diff(repoPath, parentSHA, commitSHA):
 		if processStat:
 			if not line == "":
 				stat = line.split('\t')
+				fileName = stat[2].strip('"')
 
 				### enter slow-mo.
 				# these regexes are the slowest thing in here so far. it would be ideal
@@ -55,12 +56,14 @@ def diff(repoPath, parentSHA, commitSHA):
 				# file was renamed/moved, will give you both the old name and the new name)
 				# and makes sure that we only store the new name of the file, as that is what
 				# we use when counting up all the hunks.
-				fileName = r1.sub("\g<1>\g<3>\g<4>", stat[2])
+
+				fileName = r1.sub("\g<1>\g<3>\g<4>", fileName)
 				fileName = r2.sub('/', fileName) # idk regex D:
 
 				# file was renamed completely, such that there were no "{" or "}"
 				if "=>" in fileName:
 					fileName = r3.sub("\g<1>", fileName)
+
 				###
 
 				linesAdded = "0" if "-" in stat[0] else stat[0]
@@ -77,7 +80,8 @@ def diff(repoPath, parentSHA, commitSHA):
 		else:
 			# get filename of current file being diffed
 			if line.startswith("diff"):
-				currentFile = line[line.index(" b/") + 3:]
+				if " b/" in line:
+					currentFile = line.strip('"')[line.index(" b/") + 3:]
 
 			# update that file's number of hunks modified as they're encountered
 			if line.startswith("@@"):

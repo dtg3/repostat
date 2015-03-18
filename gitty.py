@@ -7,22 +7,21 @@ import dotter
 
 def init_graph(outputFile):
 	graph = open(outputFile, "wb")
-	graph.write('digraph G {\n')
-	graph.write('\trankdir="BT"\n')
+	graph.write('graph TD;\n')
 	return graph
 
 def end_graph(graph):
-	graph.write('}\n')
 	graph.close()
 
 # write to dot graph
 def gwrite(graph, child, parent, weight):
 	if not parent:
-		graph.write('\t"NULL" -> "' + child + '";\n')
+		graph.write('\tNULL(NULL)-->' + child + '(' + child + ')' + ';\n')
 	elif weight == 1:
-		graph.write('\t"' + parent + '" -> "' + child + '";\n')
+		graph.write('\t' + parent + '(' + parent + ')' + '-->' + child + '(' + child + ');\n')
 	elif weight > 1:
-		graph.write('\t"' + parent + '" -> "' + child + '" [label="' + str(weight) + '"];\n')
+		graph.write('\t' + parent + '(' + parent + ')' + '-->' + '|' + str(weight) + '| ' + child + '(' + child + ');\n')
+
 
 def init_csv(filename):
 	csv = open(filename, 'w')
@@ -94,7 +93,7 @@ class Edge(object):
 parser = argparse.ArgumentParser()
 parser.add_argument('repository')
 parser.add_argument('-s','--svg', type=str)
-parser.add_argument('-o','--output', type=str, default="graph.dot")
+parser.add_argument('-o','--output', type=str, default="graph.md")
 parser.add_argument('-c','--csv', type=str, default="linear-paths.csv")
 args = parser.parse_args()
 
