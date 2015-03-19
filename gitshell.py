@@ -4,7 +4,7 @@ import re
 
 
 def build_commit_dicts(repoPath):
-	output = subprocess.check_output(['git', '--git-dir', repoPath + '/.git', 'log', '--branches', '--pretty=format:"%h %p"']).splitlines()
+	output = subprocess.check_output(['git', '--git-dir', repoPath, 'log', '--branches', '--pretty=format:"%h %p"']).splitlines()
 	dp = defaultdict(list) # dictionary where keys are parent commits
 	dc = defaultdict(list) # dictionary where keys are child commits
 	cache = dict()         # cache of unwritted linear squashes (farthest parent -> original child, weight)
@@ -34,7 +34,7 @@ r3 = re.compile(r"[^\s]*\s=>\s(.*)")                           # find "old => ne
 def diff(repoPath, parentSHA, commitSHA):
 	fileDiffStats = defaultdict(list)  # {"filename" : loc-add, loc-del, hunks}
 
-	output = subprocess.check_output(['git', '--git-dir', repoPath + '/.git', 'diff', parentSHA, commitSHA,'--numstat', '--unified=0', '--find-renames']).splitlines()
+	output = subprocess.check_output(['git', '--git-dir', repoPath, 'diff', parentSHA, commitSHA,'--numstat', '--unified=0', '--find-renames']).splitlines()
 	processStat = True  # whether numstat output needs processed
 	totalHunks = 0      # number of hunks modified
 	currentFile = ""    # file of current diff
