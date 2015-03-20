@@ -14,7 +14,6 @@ class Metadata(object):
 		self.author_date  = ad
 		self.signature    = s
 
-
 	def fdel(self):
 		del committer
 		del author
