@@ -5,7 +5,7 @@ import re
 
 
 def build_commit_dicts(repoPath):
-	output = subprocess.check_output(['git', '--git-dir', repoPath, 'log', '--branches', '--date=iso', '--pretty=format:"%cN<delim>%aN<delim>%cd<delim>%ad<delim>%G?<delim>%h<delim>%p"']).splitlines()
+	output = subprocess.check_output(['git', '--git-dir', repoPath, 'log', '--branches', '--date=iso', '--pretty=format:"%cN<delim>%aN<delim>%cd<delim>%ad<delim>%h<delim>%p"']).splitlines()
 	dp = defaultdict(list) # dictionary where keys are parent commits
 	dc = defaultdict(list) # dictionary where keys are child commits
 	cache = dict()         # cache of unwritted linear squashes (farthest parent -> original child, weight)
@@ -13,26 +13,25 @@ def build_commit_dicts(repoPath):
 
 	for line in output:
 		results = line.strip("\"").split('<delim>')
-		print results
 
 		committer    = results[0]
 		author       = results[1]
 		commit_date  = results[2]
 		author_date  = results[3]
-		signature    = results[4]
-		child        = results[5]
-		parents      = results[6].split()
+		child        = results[4]
+		parents      = results[5].split()
 
-		commitMetadata = Metadata(committer, author, commit_date, author_date, signature)
+		commitMetadata = Metadata(committer, author, commit_date, author_date)
 		dmetadata[child] = commitMetadata
 
 		for p in parents:
 			if p:
 				dp[p].append(child)
 				dc[child].append(p)
-			else:
-				dp["NULL"].append(child)
-				dc[child].append("NULL")
+
+		if len(parents) == 0:
+			dp["NULL"].append(child)
+			dc[child].append("NULL")
 
 	return dp, dc, cache, dmetadata
 
