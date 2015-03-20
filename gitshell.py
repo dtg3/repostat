@@ -1,3 +1,4 @@
+from metadata import Metadata
 import subprocess
 from collections import defaultdict
 import re
@@ -8,6 +9,7 @@ def build_commit_dicts(repoPath):
 	dp = defaultdict(list) # dictionary where keys are parent commits
 	dc = defaultdict(list) # dictionary where keys are child commits
 	cache = dict()         # cache of unwritted linear squashes (farthest parent -> original child, weight)
+	dmetadata = dict()     # dictionary where keys are commmits and values is metadata on it
 
 	for line in output:
 		results = line.strip("\"").split('<delim>')
@@ -21,6 +23,9 @@ def build_commit_dicts(repoPath):
 		child        = results[5]
 		parents      = results[6].split()
 
+		commitMetadata = Metadata(committer, author, commit_date, author_date, signature)
+		dmetadata[child] = commitMetadata
+
 		for p in parents:
 			if p:
 				dp[p].append(child)
@@ -29,7 +34,7 @@ def build_commit_dicts(repoPath):
 				dp["NULL"].append(child)
 				dc[child].append("NULL")
 
-	return dp, dc, cache
+	return dp, dc, cache, dmetadata
 
 
 # pre-compiled regexes used in diff()
