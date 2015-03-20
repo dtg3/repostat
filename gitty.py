@@ -24,9 +24,16 @@ def gwrite(graph, child, parent, weight):
 
 
 def init_csv(filename):
-	csv = open(filename, 'w')
-	csv.write('merge-base,child,file,lines-added,line-removed,hunks\n')
-	return csv
+	bu_csv = open(filename + '-branch-as-unit.csv', 'w')
+	bu_csv.write('merge-base,child,file,lines-added,line-removed,hunks\n')
+
+	bc_csv = open(filename + '-branch-as-combo.csv', 'w')
+	bc_csv.write('merge-base,child,file,lines-added,line-removed,hunks\n')
+
+	cu_csv = open(filename + '-commit-as-unit.csv', 'w')
+	cu_csv.write('merge-base,child,file,lines-added,line-removed,hunks\n')
+
+	return bu_csv, bc_csv, cu_csv
 
 def write_csv(diffstats, csvfile):
 	if args.csv:
@@ -110,7 +117,7 @@ if args.graph:
 	graph = init_graph(args.graph) # dot graph
 
 if args.csv:
-	csvfile = init_csv(args.csv)    # csv file with data on linear paths
+	bu_csv, bc_csv, cu_csv = init_csv(args.csv)    # csv file with data on linear paths
 
 # re-traverse for marking what to write to the file, starting with the first commit using BFS
 visited, queue = set(), ["NULL"]
@@ -168,7 +175,9 @@ while queue:
 				diffstat = gitshell.diff(args.repository, parent, child)
 
 				if args.csv:
-					write_csv(diffstat, csvfile)
+					write_csv(diffstat, bu_csv)
+					#write_csv(diffstat, bc_csv)
+					#write_csv(diffstat, cu_csv)
 
 			if args.graph:
 				gwrite(graph, child, node, weight)
@@ -180,7 +189,9 @@ if args.graph:
 	end_graph(graph)
 
 if args.csv:
-	csvfile.close()
+	bu_csv.close()
+	bc_csv.close()
+	cu_csv.close()
 
 if args.svg:
 	dotter.draw_graph(args.output, args.svg)
