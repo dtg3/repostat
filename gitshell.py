@@ -4,16 +4,22 @@ import re
 
 
 def build_commit_dicts(repoPath):
-	output = subprocess.check_output(['git', '--git-dir', repoPath, 'log', '--branches', '--pretty=format:"%h %p"']).splitlines()
+	output = subprocess.check_output(['git', '--git-dir', repoPath, 'log', '--branches', '--date=iso', '--pretty=format:"%cN<delim>%aN<delim>%cd<delim>%ad<delim>%G?<delim>%h<delim>%p"']).splitlines()
 	dp = defaultdict(list) # dictionary where keys are parent commits
 	dc = defaultdict(list) # dictionary where keys are child commits
 	cache = dict()         # cache of unwritted linear squashes (farthest parent -> original child, weight)
 
 	for line in output:
-		SHAS = line.strip("\"").split(' ')
+		results = line.strip("\"").split('<delim>')
+		print results
 
-		child = SHAS[0]
-		parents = SHAS[1:]
+		committer    = results[0]
+		author       = results[1]
+		commit_date  = results[2]
+		author_date  = results[3]
+		signature    = results[4]
+		child        = results[5]
+		parents      = results[6].split()
 
 		for p in parents:
 			if p:
