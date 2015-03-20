@@ -16,11 +16,11 @@ def end_graph(graph):
 # write to dot graph
 def gwrite(graph, child, parent, weight):
 	if not parent:
-		graph.write('\tNULL(NULL)-->' + child + '(' + child + ')' + ';\n')
+		graph.write('\tNULL-->' + child + ';\n')
 	elif weight == 1:
-		graph.write('\t' + parent + '(' + parent + ')' + '-->' + child + '(' + child + ');\n')
+		graph.write('\t' + parent + '-->' + child + ';\n')
 	elif weight > 1:
-		graph.write('\t' + parent + '(' + parent + ')' + '-->' + '|' + str(weight) + '| ' + child + '(' + child + ');\n')
+		graph.write('\t' + parent + '-->' + '|' + str(weight) + '| ' + child + ';\n')
 
 
 def init_csv(filename):
@@ -84,6 +84,7 @@ class Edge(object):
 		self._parent = p
 		self._weight = weight
 		self._nparent = np
+		
 	def fdel(self):
 		del self._parent
 		del self._weight
@@ -91,17 +92,25 @@ class Edge(object):
 
 # main
 parser = argparse.ArgumentParser()
+
 parser.add_argument('repository')
 parser.add_argument('-s','--svg', type=str)
-parser.add_argument('-o','--output', type=str, default="graph.md")
-parser.add_argument('-c','--csv', type=str, default="linear-paths.csv")
-args = parser.parse_args()
+parser.add_argument('-g','--graph', type=str)
+parser.add_argument('-c','--csv', type=str)
+parser.add_argument('--branch-diff', type=bool)
+parser.add_argument('--branch-sum', type=bool)
+parser.add_argument('--no-branch', type=bool)
 
+args = parser.parse_args()
 
 # first traversal for mapping parent/child relationship to build up a tree
 dp, dc, cache = gitshell.build_commit_dicts(args.repository)
-graph = init_graph(args.output) # dot graph
-csvfile = init_csv(args.csv)    # csv file with data on linear paths
+
+if args.graph:
+	graph = init_graph(args.graph) # dot graph
+
+if args.csv:
+	csvfile = init_csv(args.csv)    # csv file with data on linear paths
 
 # re-traverse for marking what to write to the file, starting with the first commit using BFS
 visited, queue = set(), ["NULL"]
@@ -157,15 +166,21 @@ while queue:
 					parent = cache[child]._nparent
 
 				diffstat = gitshell.diff(args.repository, parent, child)
-				write_csv(diffstat, csvfile)
 
-			gwrite(graph, child, node, weight)
+				if args.csv:
+					write_csv(diffstat, csvfile)
+
+			if args.graph:
+				gwrite(graph, child, node, weight)
 
 			# visit
 			queue.append(child)
 
-end_graph(graph)
-csvfile.close()
+if args.graph:
+	end_graph(graph)
+
+if args.csv:
+	csvfile.close()
 
 if args.svg:
 	dotter.draw_graph(args.output, args.svg)
