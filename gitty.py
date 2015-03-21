@@ -124,7 +124,8 @@ while queue:
 			else:
 				# extend parent's squished parent to end at current node, weight + 1
 				temp = cache[parent]
-				cache[node] = Edge(temp._parent, temp._weight + 1, temp._nparent)
+				cache[node] = temp
+				cache[node]._weight = temp._weight + 1
 				cache[node].committers.add(dm[node].committer)
 				cache[node].authors.add(dm[node].author)
 				cache[node].commitEndTime = dm[node].commit_date

@@ -9,7 +9,7 @@ class Writer(object):
 
 
 	def write_headers(self):
-		branchHeader = "id,num unique files,branch loc total,commit loc sum,branch hunk total,commit loc sum,num unique authors,num unique committers,commit start time,commit end time,author start time, author end time,num commits"
+		branchHeader = "id,num commits,num unique files,branch locs,commit locs,branch hunks,commit hunks,num unique authors,num unique committers,commit start time,commit end time,author start time, author end time"
 		self.branch_csv.write(branchHeader + '\n')
 
 	def write_data(self, node, child, diffstats, cacheInfo):
@@ -38,8 +38,6 @@ class Writer(object):
 		numUniqueCommitters = len(cacheInfo.committers)
 		numUniqueAuthors = len(cacheInfo.authors)
 
-		print "diffstats keys is: " + str(len(diffstats.keys())) + ", num files from cache is: " + str(len(cacheInfo.files))
-
 		commitStartTime = cacheInfo.commitStartTime
 		commitEndTime = cacheInfo.commitEndTime
 		authorStartTime = cacheInfo.authorStartTime
@@ -65,6 +63,7 @@ class Writer(object):
 
 
 		self.branch_csv.write(uniqueID + ',')
+		self.branch_csv.write(str(numCommits) + ',') # TODO
 		self.branch_csv.write(numUniqueFiles + ',')
 		self.branch_csv.write(str(branchLocTotal) + ',')
 		self.branch_csv.write(str(commitLocTotal) + ',') # TODO
@@ -75,8 +74,7 @@ class Writer(object):
 		self.branch_csv.write(commitStartTime + ',') # TODO
 		self.branch_csv.write(commitEndTime + ',') # TODO
 		self.branch_csv.write(authorStartTime + ',') # TODO
-		self.branch_csv.write(authorEndTime + ',') # TODO
-		self.branch_csv.write(str(numCommits)) # TODO
+		self.branch_csv.write(authorEndTime) # TODO
 		self.branch_csv.write('\n')
 
 	def close(self):
