@@ -167,7 +167,6 @@ while queue:
 				# from the parent to this child
 				lastChild = child
 				nextParent = dc[lastChild][0]
-				print "Beginning: from " + child + " to " + parent
 				finishedLinearPath = False
 
 				combinedCommitLoc = 0

@@ -87,9 +87,12 @@ class Writer(object):
 
 		# calculate differences
 		commitTimeWindow = cEnd - cStart
-		authorTimeWindow = aEnd - aStart
+		cHours, cSecs = divmod(commitTimeWindow.total_seconds(), 3600)
+		commitTimeWindowStr = str(cHours + cSecs/3600)
 
-		# TODO: only use hours and hour decimals in the time windows
+		authorTimeWindow = aEnd - aStart
+		aHours, aSecs = divmod(authorTimeWindow.total_seconds(), 3600)
+		authorTimeWindowStr = str(aHours + aSecs/3600)
 
 		# write out row
 		self.branch_csv.write(uniqueID + ',')
@@ -108,10 +111,10 @@ class Writer(object):
 		self.branch_csv.write(str(numUniqueCommitters) + ',')
 		self.branch_csv.write(commitStartTimeNoLocale + ',')
 		self.branch_csv.write(commitEndTimeNoLocale + ',')
-		self.branch_csv.write(str(commitTimeWindow).replace(',','') + ',')
+		self.branch_csv.write(commitTimeWindowStr + ',')
 		self.branch_csv.write(authorStartTimeNoLocale + ',')
 		self.branch_csv.write(authorEndTimeNoLocale + ',')
-		self.branch_csv.write(str(authorTimeWindow).replace(',',''))
+		self.branch_csv.write(authorTimeWindowStr)
 		self.branch_csv.write('\n')
 
 	def close(self):
