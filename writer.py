@@ -15,7 +15,7 @@ class Writer(object):
 
 	def write_data(self, node, child, diffstats, cacheInfo):
 
-		uniqueID = node + '-' + child
+		uniqueID = node + '...' + child
 		numUniqueFiles = str(len(diffstats.keys()))
 
 		branchLocTotal = 0
