@@ -13,8 +13,27 @@ class Writer(object):
 		branchHeader = "id,num commits,num unique files,avg files pc,branch locs, avg branch locs pc,commit locs,avg commit locs pc,branch hunks,avg branch hunks pc,commit hunks,avg commit hunks pc,num unique authors,num unique committers,commit start time,commit end time,commit time window,author start time, author end time,author time window"
 		self.branch_csv.write(branchHeader + '\n')
 
-	def write_commit_data(self, node, child, commitStats):
+		commitHeader = "id,files,locs,hunks,commit time,author time"
+		self.commit_csv.write(commitHeader + '\n')
+
+	def write_commit_data(self, node, child, numFiles, numLocs, numHunks, metadata):
 		uniqueID = node + "..." + child
+		files = numFiles
+		locs = numLocs
+		hunks = numHunks
+		commit_time_no_local = metadata.commit_date[:19]
+		author_time_no_local = metadata.author_date[:19]
+
+		cDate = datetime.strptime(commit_time_no_local, "%Y-%m-%d %H:%M:%S")
+		aDate = datetime.strptime(author_time_no_local, "%Y-%m-%d %H:%M:%S")
+
+		self.commit_csv.write(uniqueID + ',')
+		self.commit_csv.write(str(files) + ',')
+		self.commit_csv.write(str(locs) + ',')
+		self.commit_csv.write(str(hunks) + ',')
+		self.commit_csv.write(commit_time_no_local + ',')
+		self.commit_csv.write(author_time_no_local + '\n')
+
 
 	def write_branch_data(self, node, child, diffstats, cacheInfo, combinedCommitLoc, combinedCommitHunk):
 

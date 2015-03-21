@@ -178,9 +178,19 @@ while queue:
 						finishedLinearPath = True
 					else:
 						commitdiffstat = gitshell.diff(args.repository, nextParent, lastChild)
+
+						# add up total locs and hunks for each file within that commit's diff
+						commitLocs = 0
+						commitHunks = 0
 						for key in commitdiffstat.keys():
-							combinedCommitLoc = combinedCommitLoc + int(commitdiffstat[key][0]) + int(commitdiffstat[key][1])
-							combinedCommitHunk = combinedCommitHunk + int(commitdiffstat[key][2])
+							commitLocs = commitLocs + int(commitdiffstat[key][0]) + int(commitdiffstat[key][1])
+							commitHunks = commitHunks + int(commitdiffstat[key][2])
+
+						w.write_commit_data(nextParent, lastChild, len(commitdiffstat.keys()), commitLocs, commitHunks, dm[lastChild])
+
+						# add upt total locs and hunks to all other commits in that branch
+						combinedCommitLoc = combinedCommitLoc + commitLocs
+						combinedCommitHunk = combinedCommitHunk + commitHunks
 
 					if nextParent == parent:
 						finishedLinearPath = True
