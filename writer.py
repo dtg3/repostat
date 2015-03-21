@@ -18,7 +18,7 @@ class Writer(object):
 
 	def write_branch_data(self, node, child, diffstats, cacheInfo, combinedCommitLoc, combinedCommitHunk):
 
-		uniqueID = node + '-' + child
+		uniqueID = node + '...' + child
 		numUniqueFiles = str(len(diffstats.keys()))
 
 		branchLocTotal = 0
