@@ -13,15 +13,18 @@ class Writer(object):
 		branchHeader = "id,num commits,num unique files,avg files pc,branch locs, avg branch locs pc,commit locs,avg commit locs pc,branch hunks,avg branch hunks pc,commit hunks,avg commit hunks pc,num unique authors,num unique committers,commit start time,commit end time,commit time window,author start time, author end time,author time window"
 		self.branch_csv.write(branchHeader + '\n')
 
-	def write_data(self, node, child, diffstats, cacheInfo):
+	def write_commit_data(self, node, child, commitStats):
+		uniqueID = node + "..." + child
+
+	def write_branch_data(self, node, child, diffstats, cacheInfo, combinedCommitLoc, combinedCommitHunk):
 
 		uniqueID = node + '-' + child
 		numUniqueFiles = str(len(diffstats.keys()))
 
 		branchLocTotal = 0
-		commitLocTotal = 0
+		commitLocTotal = combinedCommitLoc
 		branchHunkTotal = 0
-		commitHunkTotal = 0
+		commitHunkTotal = combinedCommitHunk
 		numUniqueAuthors = 0
 		numUniqueCommitters = 0
 		commitStartTime = ""
@@ -66,6 +69,8 @@ class Writer(object):
 		# calculate differences
 		commitTimeWindow = cEnd - cStart
 		authorTimeWindow = aEnd - aStart
+
+		# TODO: only use hours and hour decimals in the time windows
 
 		# write out row
 		self.branch_csv.write(uniqueID + ',')

@@ -111,12 +111,6 @@ while queue:
 				# store metadata
 				cache[node].committers.add(dm[node].committer)
 				cache[node].authors.add(dm[node].author)
-	
-				#cache[node].files.add(dm[node].files)
-				#locByBranch = 0
-				#locByCommitSum = 0
-				#hunkByBranch = 0
-				#hunkByCommitSum = 0
 				cache[node].commitStartTime = dm[node].commit_date
 				cache[node].commitEndTime = dm[node].commit_date
 				cache[node].authorStartTime = dm[node].author_date
@@ -166,15 +160,36 @@ while queue:
 				if parent == "NULL":
 					parent = cache[child]._nparent
 
-				diffstat = gitshell.diff(args.repository, parent, child)
+				# get the diff for the entire branch
+				branchdiffstat = gitshell.diff(args.repository, parent, child)
 
-				# TODO: turn diffstat into a part of cache here
+				# get the diffs for each individual commit, starting
+				# from the parent to this child
+				lastChild = child
+				nextParent = dc[lastChild][0]
+				print "Beginning: from " + child + " to " + parent
+				finishedLinearPath = False
+
+				combinedCommitLoc = 0
+				combinedCommitHunk = 0
+
+				while not finishedLinearPath:
+					if (nextParent == "NULL"):
+						finishedLinearPath = True
+					else:
+						commitdiffstat = gitshell.diff(args.repository, nextParent, lastChild)
+						for key in commitdiffstat.keys():
+							combinedCommitLoc = combinedCommitLoc + int(commitdiffstat[key][0]) + int(commitdiffstat[key][1])
+							combinedCommitHunk = combinedCommitHunk + int(commitdiffstat[key][2])
+
+					if nextParent == parent:
+						finishedLinearPath = True
+					elif not finishedLinearPath:
+						lastChild = nextParent
+						nextParent = dc[lastChild][0]
 
 				if args.csv:
-					w.write_data(node, child, diffstat, cache[child])
-					#write_csv(diffstat, bu_csv)
-					#write_csv(diffstat, bc_csv)
-					#write_csv(diffstat, cu_csv)
+					w.write_branch_data(node, child, branchdiffstat, cache[child], combinedCommitLoc, combinedCommitHunk)
 
 			if args.graph:
 				gwrite(graph, child, node, weight)
