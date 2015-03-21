@@ -1,5 +1,6 @@
 
 from edge import Edge
+from datetime import datetime
 
 class Writer(object):
 
@@ -9,7 +10,7 @@ class Writer(object):
 
 
 	def write_headers(self):
-		branchHeader = "id,num commits,num unique files,branch locs,commit locs,branch hunks,commit hunks,num unique authors,num unique committers,commit start time,commit end time,author start time, author end time"
+		branchHeader = "id,num commits,num unique files,avg files pc,branch locs, avg branch locs pc,commit locs,avg commit locs pc,branch hunks,avg branch hunks pc,commit hunks,avg commit hunks pc,num unique authors,num unique committers,commit start time,commit end time,commit time window,author start time, author end time,author time window"
 		self.branch_csv.write(branchHeader + '\n')
 
 	def write_data(self, node, child, diffstats, cacheInfo):
@@ -37,44 +38,56 @@ class Writer(object):
 		numCommits = cacheInfo._weight
 		numUniqueCommitters = len(cacheInfo.committers)
 		numUniqueAuthors = len(cacheInfo.authors)
-
 		commitStartTime = cacheInfo.commitStartTime
 		commitEndTime = cacheInfo.commitEndTime
 		authorStartTime = cacheInfo.authorStartTime
 		authorEndTime = cacheInfo.authorEndTime
 
 
+		# do some calculations
+		avgFilesPerCommit = int(numUniqueFiles) / float(numCommits)
+		avgBranchLoc = branchLocTotal / float(numCommits)
+		avgCommitLoc = commitLocTotal / float(numCommits)
+		avgBranchHunk = branchHunkTotal / float(numCommits)
+		avgCommitHunk = commitHunkTotal / float(numCommits)
 
+		# get the times as strings without the local time addition (e.g., " + 0400")
+		commitStartTimeNoLocale = commitStartTime[:19]
+		commitEndTimeNoLocale = commitEndTime[:19]
+		authorStartTimeNoLocale = authorStartTime[:19]
+		authorEndTimeNoLocale = authorEndTime[:19]
 
-		#_parent = ""
-		#_weight = 1
-		#####_nparent = "" # for cases when _parent is NULL
-		#committers = set()
-		#authors = set()
-		#####files = set()
-		locByBranch = 0
-		locByCommitSum = 0
-		hunkByBranch = 0
-		hunkByCommitSum = 0
-		#commitStartTime = ""
-		#commitEndTime = ""
-		#authorStartTime = ""
-		#authorEndTime = ""
+		# save time strings as datetime objects
+		cStart = datetime.strptime(commitStartTimeNoLocale, "%Y-%m-%d %H:%M:%S")
+		cEnd = datetime.strptime(commitEndTimeNoLocale, "%Y-%m-%d %H:%M:%S")
+		aStart = datetime.strptime(authorStartTimeNoLocale, "%Y-%m-%d %H:%M:%S")
+		aEnd = datetime.strptime(authorEndTimeNoLocale, "%Y-%m-%d %H:%M:%S")
 
+		# calculate differences
+		commitTimeWindow = cEnd - cStart
+		authorTimeWindow = aEnd - aStart
 
+		# write out row
 		self.branch_csv.write(uniqueID + ',')
-		self.branch_csv.write(str(numCommits) + ',') # TODO
+		self.branch_csv.write(str(numCommits) + ',')
 		self.branch_csv.write(numUniqueFiles + ',')
+		self.branch_csv.write(str(avgFilesPerCommit) + ',')
 		self.branch_csv.write(str(branchLocTotal) + ',')
-		self.branch_csv.write(str(commitLocTotal) + ',') # TODO
+		self.branch_csv.write(str(avgBranchLoc) + ',')
+		self.branch_csv.write(str(commitLocTotal) + ',')
+		self.branch_csv.write(str(avgCommitLoc) + ',')
 		self.branch_csv.write(str(branchHunkTotal) + ',')
-		self.branch_csv.write(str(commitHunkTotal) + ',') # TODO
-		self.branch_csv.write(str(numUniqueAuthors) + ',') # TODO
-		self.branch_csv.write(str(numUniqueCommitters) + ',') # TODO
-		self.branch_csv.write(commitStartTime + ',') # TODO
-		self.branch_csv.write(commitEndTime + ',') # TODO
-		self.branch_csv.write(authorStartTime + ',') # TODO
-		self.branch_csv.write(authorEndTime) # TODO
+		self.branch_csv.write(str(avgBranchHunk) + ',')
+		self.branch_csv.write(str(commitHunkTotal) + ',')
+		self.branch_csv.write(str(avgCommitHunk) + ',')
+		self.branch_csv.write(str(numUniqueAuthors) + ',')
+		self.branch_csv.write(str(numUniqueCommitters) + ',')
+		self.branch_csv.write(commitStartTimeNoLocale + ',')
+		self.branch_csv.write(commitEndTimeNoLocale + ',')
+		self.branch_csv.write(str(commitTimeWindow).replace(',','') + ',')
+		self.branch_csv.write(authorStartTimeNoLocale + ',')
+		self.branch_csv.write(authorEndTimeNoLocale + ',')
+		self.branch_csv.write(str(authorTimeWindow).replace(',',''))
 		self.branch_csv.write('\n')
 
 	def close(self):
