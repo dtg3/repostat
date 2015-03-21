@@ -4,6 +4,8 @@
 import argparse
 import gitshell
 import dotter
+from edge import Edge
+from writer import Writer
 
 def init_graph(outputFile):
 	graph = open(outputFile, "wb")
@@ -21,19 +23,6 @@ def gwrite(graph, child, parent, weight):
 		graph.write('\t' + parent + '-->' + child + ';\n')
 	elif weight > 1:
 		graph.write('\t' + parent + '-->' + '|' + str(weight) + '| ' + child + ';\n')
-
-
-def init_csv(filename):
-	bu_csv = open(filename + '-branch-as-unit.csv', 'w')
-	bu_csv.write('merge-base,child,file,lines-added,line-removed,hunks\n')
-
-	bc_csv = open(filename + '-branch-as-combo.csv', 'w')
-	bc_csv.write('merge-base,child,file,lines-added,line-removed,hunks\n')
-
-	cu_csv = open(filename + '-commit-as-unit.csv', 'w')
-	cu_csv.write('merge-base,child,file,lines-added,line-removed,hunks\n')
-
-	return bu_csv, bc_csv, cu_csv
 
 def write_csv(diffstats, csvfile):
 	if args.csv:
@@ -80,23 +69,6 @@ def debug_what_am_i(sha):
 	if is_linear(sha):
 		print sha + " is linear!"
 
-
-# edges used for squishing linear branches
-class Edge(object):
-	_parent = ""
-	_weight = 1
-	_nparent = "" # for cases when _parent is NULL
-
-	def __init__(self, p, weight, np):
-		self._parent = p
-		self._weight = weight
-		self._nparent = np
-		
-	def fdel(self):
-		del self._parent
-		del self._weight
-
-
 # main
 parser = argparse.ArgumentParser()
 
@@ -117,7 +89,8 @@ if args.graph:
 	graph = init_graph(args.graph) # dot graph
 
 if args.csv:
-	bu_csv, bc_csv, cu_csv = init_csv(args.csv)    # csv file with data on linear paths
+	w = Writer(args.csv)
+	w.write_headers()
 
 # re-traverse for marking what to write to the file, starting with the first commit using BFS
 visited, queue = set(), ["NULL"]
@@ -135,10 +108,27 @@ while queue:
 				# remove old edge, put new edge ending at this commit (no op)
 				cache[node] = Edge(parent, 1, '')
 
+				# store metadata
+				cache[node].committers.add(dm[node].committer)
+				cache[node].authors.add(dm[node].author)
+				#cache[node].files.add(dm[node].files)
+				#locByBranch = 0
+				#locByCommitSum = 0
+				#hunkByBranch = 0
+				#hunkByCommitSum = 0
+				cache[node].commitStartTime = dm[node].commit_date
+				cache[node].commitEndTime = dm[node].commit_date
+				cache[node].authorStartTime = dm[node].author_date
+				cache[node].authorEndTime = dm[node].author_date
+
 			else:
 				# extend parent's squished parent to end at current node, weight + 1
 				temp = cache[parent]
 				cache[node] = Edge(temp._parent, temp._weight + 1, temp._nparent)
+				cache[node].committers.add(dm[node].committer)
+				cache[node].authors.add(dm[node].author)
+				cache[node].commitEndTime = dm[node].commit_date
+				cache[node].authorEndTime = dm[node].author_date
 				del cache[parent]
 
 				# remove old edge, put new edge ending at this commit
@@ -174,8 +164,11 @@ while queue:
 
 				diffstat = gitshell.diff(args.repository, parent, child)
 
+				# TODO: turn diffstat into a part of cache here
+
 				if args.csv:
-					write_csv(diffstat, bu_csv)
+					w.write_data(node, child, diffstat, cache[child])
+					#write_csv(diffstat, bu_csv)
 					#write_csv(diffstat, bc_csv)
 					#write_csv(diffstat, cu_csv)
 
@@ -189,9 +182,7 @@ if args.graph:
 	end_graph(graph)
 
 if args.csv:
-	bu_csv.close()
-	bc_csv.close()
-	cu_csv.close()
+	w.close()
 
 if args.svg:
 	dotter.draw_graph(args.output, args.svg)
