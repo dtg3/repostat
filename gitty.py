@@ -111,6 +111,7 @@ while queue:
 				# store metadata
 				cache[node].committers.add(dm[node].committer)
 				cache[node].authors.add(dm[node].author)
+	
 				#cache[node].files.add(dm[node].files)
 				#locByBranch = 0
 				#locByCommitSum = 0
@@ -126,8 +127,10 @@ while queue:
 				temp = cache[parent]
 				cache[node] = temp
 				cache[node]._weight = temp._weight + 1
+				
 				cache[node].committers.add(dm[node].committer)
 				cache[node].authors.add(dm[node].author)
+				
 				cache[node].commitEndTime = dm[node].commit_date
 				cache[node].authorEndTime = dm[node].author_date
 				del cache[parent]

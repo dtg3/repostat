@@ -22,6 +22,8 @@ class Edge(object):
 		self._parent = p
 		self._weight = weight
 		self._nparent = np
+		self.committers = set()
+		self.authors = set()
 		
 	def fdel(self):
 		del self._parent
@@ -34,8 +36,8 @@ class Edge(object):
 		del self.locByCommitSum
 		del self.hunkByBranch
 		del self.hunkByCommitSum
-		del commitStartTime
-		del commitEndTime
-		del authorStartTime
-		del authorEndTime
+		del self.commitStartTime
+		del self.commitEndTime
+		del self.authorStartTime
+		del self.authorEndTime
 
