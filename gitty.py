@@ -171,6 +171,7 @@ while queue:
 
 				combinedCommitLoc = 0
 				combinedCommitHunk = 0
+				combinedCommitFile = set()
 
 				while not finishedLinearPath:
 					if (nextParent == "NULL"):
@@ -184,6 +185,7 @@ while queue:
 						for key in commitdiffstat.keys():
 							commitLocs = commitLocs + int(commitdiffstat[key][0]) + int(commitdiffstat[key][1])
 							commitHunks = commitHunks + int(commitdiffstat[key][2])
+							combinedCommitFile.add(key)
 
 						w.write_commit_data(nextParent, lastChild, len(commitdiffstat.keys()), commitLocs, commitHunks, dm[lastChild])
 
@@ -198,7 +200,7 @@ while queue:
 						nextParent = dc[lastChild][0]
 
 				if args.csv:
-					w.write_branch_data(node, child, branchdiffstat, cache[child], combinedCommitLoc, combinedCommitHunk)
+					w.write_branch_data(node, child, branchdiffstat, cache[child], combinedCommitLoc, combinedCommitHunk, combinedCommitFile)
 
 			if args.graph:
 				gwrite(graph, child, node, weight)

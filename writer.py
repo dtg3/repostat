@@ -30,7 +30,7 @@ class Writer(object):
 		return date
 
 	def write_headers(self):
-		branchHeader = "id,num commits,num unique files,avg files pc,branch locs, avg branch locs pc,commit locs,avg commit locs pc,branch hunks,avg branch hunks pc,commit hunks,avg commit hunks pc,num unique authors,num unique committers,commit start time,commit end time,commit time window,author start time, author end time,author time window"
+		branchHeader = "id,num commits,branch files,avg branch files pc,commit files,avg commit files pc,branch locs, avg branch locs pc,commit locs,avg commit locs pc,branch hunks,avg branch hunks pc,commit hunks,avg commit hunks pc,num unique authors,num unique committers,commit start time,commit end time,commit time window,author start time, author end time,author time window"
 		self.branch_csv.write(branchHeader + '\n')
 
 		commitHeader = "id,files,locs,hunks,commit time,author time"
@@ -53,10 +53,12 @@ class Writer(object):
 		self.commit_csv.write(str(aDate) + '\n')
 
 
-	def write_branch_data(self, node, child, diffstats, cacheInfo, combinedCommitLoc, combinedCommitHunk):
+	def write_branch_data(self, node, child, diffstats, cacheInfo, combinedCommitLoc, combinedCommitHunk, combinedCommitFile):
 
 		uniqueID = node + '...' + child
 		numUniqueFiles = str(len(diffstats.keys()))
+		combinedCommitFileSize = str(len(combinedCommitFile))
+
 
 		branchLocTotal = 0
 		commitLocTotal = combinedCommitLoc
@@ -85,6 +87,7 @@ class Writer(object):
 
 		# do some calculations
 		avgFilesPerCommit = int(numUniqueFiles) / float(numCommits)
+		avgCommitFileSizePerCommit = int(combinedCommitFileSize) / float(numCommits)
 		avgBranchLoc = branchLocTotal / float(numCommits)
 		avgCommitLoc = commitLocTotal / float(numCommits)
 		avgBranchHunk = branchHunkTotal / float(numCommits)
@@ -110,6 +113,8 @@ class Writer(object):
 		self.branch_csv.write(str(numCommits) + ',')
 		self.branch_csv.write(numUniqueFiles + ',')
 		self.branch_csv.write(str(avgFilesPerCommit) + ',')
+		self.branch_csv.write(combinedCommitFileSize + ',')
+		self.branch_csv.write(str(avgCommitFileSizePerCommit) + ',')
 		self.branch_csv.write(str(branchLocTotal) + ',')
 		self.branch_csv.write(str(avgBranchLoc) + ',')
 		self.branch_csv.write(str(commitLocTotal) + ',')
