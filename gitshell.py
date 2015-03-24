@@ -2,7 +2,7 @@ from metadata import Metadata
 import subprocess
 from collections import defaultdict
 import re
-
+import utils as utils
 
 def build_commit_dicts(repoPath):
 	output = subprocess.check_output(['git', '--git-dir', repoPath, 'log', '--branches', '--date=iso', '--pretty=format:"%cN<delim>%aN<delim>%cd<delim>%ad<delim>%H<delim>%P"']).splitlines()
@@ -16,8 +16,8 @@ def build_commit_dicts(repoPath):
 		
 		committer    = results[0]
 		author       = results[1]
-		commit_date  = results[2]
-		author_date  = results[3]
+		commit_date  = utils.normalize_datetime(results[2])
+		author_date  = utils.normalize_datetime(results[3])
 		child        = results[4]
 		parents      = results[5].split()
 

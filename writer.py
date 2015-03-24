@@ -8,27 +8,6 @@ class Writer(object):
 		self.branch_csv = open(filename + "-branch.csv", 'w')
 		self.commit_csv = open(filename + "-commit.csv", 'w')
 
-
-	def normalize_datetime(self, dateStrWithOffset):
-
-		# first get the date without the offset (e.g., "+0200")
-		date = datetime.strptime(dateStrWithOffset[:19], "%Y-%m-%d %H:%M:%S")
-
-		# keey the offset, and grab the hours and minutes from it
-		offset = dateStrWithOffset[20:]
-		hours_off = int(offset[1:3])
-		minutes_off = int(offset[3:])
-
-		# provided time is ahead of UTC by some offset
-		if offset[0] == '+':
-			date = date - timedelta(hours=hours_off, minutes=minutes_off)
-
-		# provided time is behind UTC by some offset
-		elif offset[0] == '-':
-			date = date + timedelta(hours=hours_off, minutes=minutes_off)
-
-		return date
-
 	def write_headers(self):
 		branchHeader = "id,num commits,branch files,avg branch files pc,commit files,avg commit files pc,branch locs, avg branch locs pc,commit locs,avg commit locs pc,branch hunks,avg branch hunks pc,commit hunks,avg commit hunks pc,num unique authors,num unique committers,commit start time,commit end time,commit time window,author start time, author end time,author time window"
 		self.branch_csv.write(branchHeader + '\n')
@@ -42,8 +21,8 @@ class Writer(object):
 		locs = numLocs
 		hunks = numHunks
 
-		cDate = self.normalize_datetime(metadata.commit_date)
-		aDate = self.normalize_datetime(metadata.author_date)
+		cDate = metadata.commit_date
+		aDate = metadata.author_date
 
 		self.commit_csv.write(uniqueID + ',')
 		self.commit_csv.write(str(files) + ',')
@@ -66,9 +45,6 @@ class Writer(object):
 		commitHunkTotal = combinedCommitHunk
 		numUniqueAuthors = 0
 		numUniqueCommitters = 0
-		commitStartTime = ""
-		commitEndTime = ""
-		authorStartTime = ""
 		authorEndTime = ""
 		numCommits = 0
 
@@ -94,10 +70,10 @@ class Writer(object):
 		avgCommitHunk = commitHunkTotal / float(numCommits)
 
 		# save time strings as datetime objects
-		cStart = self.normalize_datetime(commitStartTime)
-		cEnd = self.normalize_datetime(commitEndTime)
-		aStart = self.normalize_datetime(authorStartTime)
-		aEnd = self.normalize_datetime(authorEndTime)
+		cStart = commitStartTime
+		cEnd = commitEndTime
+		aStart = authorStartTime
+		aEnd = authorEndTime
 
 		# calculate differences
 		commitTimeWindow = cEnd - cStart
@@ -136,8 +112,4 @@ class Writer(object):
 	def close(self):
 		self.branch_csv.close()
 		self.commit_csv.close()
-
-
-
-
 

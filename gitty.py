@@ -124,9 +124,23 @@ while queue:
 				
 				cache[node].committers.add(dm[node].committer)
 				cache[node].authors.add(dm[node].author)
+
+				# replace the author and commit start time if, in rewriting git
+				# or oddities with parallel dev, this commit has an earlier time
+				# than the parent commit
+				if dm[node].commit_date <= cache[node].commitStartTime:
+					cache[node].commitStartTime = dm[node].commit_date
+
+				if dm[node].author_date <= cache[node].authorStartTime:
+					cache[node].authorStartTime = dm[node].author_date
 				
-				cache[node].commitEndTime = dm[node].commit_date
-				cache[node].authorEndTime = dm[node].author_date
+				# only replace the end times if this commit has a later date
+				if dm[node].commit_date >= cache[node].commitEndTime:
+					cache[node].commitEndTime = dm[node].commit_date
+
+				if dm[node].author_date >= cache[node].authorEndTime:
+					cache[node].authorEndTime = dm[node].author_date
+
 				del cache[parent]
 
 				# remove old edge, put new edge ending at this commit
