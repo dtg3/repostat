@@ -92,6 +92,10 @@ def diff(repoPath, parentSHA, commitSHA):
 			if line.startswith("diff"):
 				if " b/" in line:
 					currentFile = line.strip('"')[line.index(" b/") + 3:]
+				elif "\"b/" in line:
+					currentFile = line.strip('"')[line.index("\"b/") + 3:]
+				elif "b/" in line:
+					currentFile = line.strip('"')[line.index("b/") + 2:]
 
 			# update that file's number of hunks modified as they're encountered
 			if line.startswith("@@"):
