@@ -201,7 +201,8 @@ while queue:
 							commitHunks = commitHunks + int(commitdiffstat[key][2])
 							combinedCommitFile.add(key)
 
-						w.write_commit_data(nextParent, lastChild, len(commitdiffstat.keys()), commitLocs, commitHunks, dm[lastChild])
+						if args.csv:
+							w.write_commit_data(nextParent, lastChild, len(commitdiffstat.keys()), commitLocs, commitHunks, dm[lastChild])
 
 						# add upt total locs and hunks to all other commits in that branch
 						combinedCommitLoc = combinedCommitLoc + commitLocs
