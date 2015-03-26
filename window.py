@@ -44,6 +44,25 @@ commits.sort(key=lambda x: x[COMMIT_TIME])
 start = datetime.strptime(commits[0][COMMIT_TIME], "%Y-%m-%d %H:%M:%S")
 end = datetime.strptime(commits[len(commits) - 1][COMMIT_TIME], "%Y-%m-%d %H:%M:%S")
 
+start = (start - timedelta(minutes=start.minute % 5)).replace(second=0)
+
+totalMin = int(5 * round(float((end - start).days * 24 * 60)/5))
+time_dic = {start + timedelta(minutes=x): 0 for x in range(0,totalMin,5)}
+
+for branch in branches:
+	commit_s = (datetime.strptime(branch[COMMIT_START], "%Y-%m-%d %H:%M:%S")).replace(second=0)
+	commit_e = (datetime.strptime(branch[COMMIT_END], "%Y-%m-%d %H:%M:%S")).replace(second=0)
+	while commit_s <= commit_e:
+
+#csv = open(args.branchcsv[:-4] + "-window.csv", 'w')
+#csv.write('time,num branches\n')
+#Write out results
+#for key in sorted(time_dic.keys()):
+#	csv.write(str(time_dic[key]) + ',' + str(time_dic[key]))
+#csv.close()
+
+
+'''
 print "from " + str(start) + " to " + str(end)
 activity = []
 point = start
@@ -71,4 +90,4 @@ for p in activity:
 	line = str(p[0]) + ',' + str(p[1]) + '\n'
 	csv.write(line)
 csv.close()
-
+'''
