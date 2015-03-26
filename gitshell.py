@@ -8,7 +8,6 @@ def build_commit_dicts(repoPath):
 	output = subprocess.check_output(['git', '--git-dir', repoPath, 'log', '--branches', '--date=iso', '--pretty=format:"%cN<delim>%aN<delim>%cd<delim>%ad<delim>%H<delim>%P"']).splitlines()
 	dp = defaultdict(list) # dictionary where keys are parent commits
 	dc = defaultdict(list) # dictionary where keys are child commits
-	cache = dict()         # cache of unwritted linear squashes (farthest parent -> original child, weight)
 	dmetadata = dict()     # dictionary where keys are commmits and values is metadata on it
 
 	for line in output:
@@ -33,7 +32,7 @@ def build_commit_dicts(repoPath):
 			dp["NULL"].append(child)
 			dc[child].append("NULL")
 
-	return dp, dc, cache, dmetadata
+	return dp, dc, dmetadata
 
 
 # pre-compiled regexes used in diff()
