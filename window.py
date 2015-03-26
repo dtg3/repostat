@@ -33,7 +33,6 @@ AUTHOR_WINDOW = 21
 COMMIT_TIME = 4
 AUTHOR_TIME = 5
 
-
 # sort branch csv based on commit start time
 branches.sort(key=lambda x: x[COMMIT_START])
 
@@ -52,7 +51,13 @@ time_dic = {start + timedelta(minutes=x): 0 for x in range(0,totalMin,5)}
 for branch in branches:
 	commit_s = (datetime.strptime(branch[COMMIT_START], "%Y-%m-%d %H:%M:%S")).replace(second=0)
 	commit_e = (datetime.strptime(branch[COMMIT_END], "%Y-%m-%d %H:%M:%S")).replace(second=0)
-	while commit_s <= commit_e:
+
+	commit_s = timedelta(minutes=commit_s.minute%5)
+    t -= commit_s
+    if commit_s > timedelta(0):
+        t += timedelta(minutes=5)
+        
+	#while commit_s <= commit_e:
 
 #csv = open(args.branchcsv[:-4] + "-window.csv", 'w')
 #csv.write('time,num branches\n')
