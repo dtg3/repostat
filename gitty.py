@@ -196,7 +196,7 @@ for x in xrange(0,len(branch_units)):
 
 	# initialization
 	nextStartIndex, nextEndIndex = 0, 1
-	combinedCommitLoc, combinedCommitHunk, combinedCommitFile = 0, 0, set()
+	combinedCommitLocA, combinedCommitLocR, combinedCommitHunk, combinedCommitFile = 0, 0, 0, set()
 	numCommits = len(branch_segment) - 1
 	committers, authors = set(), set()
 	commitStart, authorStart, commitEnd, authorEnd = datetime(MAXYEAR, 1, 1), datetime(MAXYEAR, 1, 1), datetime(MINYEAR, 1, 1), datetime(MINYEAR, 1, 1)
@@ -228,13 +228,15 @@ for x in xrange(0,len(branch_units)):
 		nextEnd = cdata[2]
 
 		# add up total locs, hunks, and files within that commit's diff
-		commitLoc, commitHunk, commitFile = 0, 0, len(commitdiffstat.keys())
+		commitLocA, commitLocR, commitHunk, commitFile = 0, 0, 0, len(commitdiffstat.keys())
 		for f in commitdiffstat.keys():
-			commitLoc += int(commitdiffstat[f][0]) + int(commitdiffstat[f][1])
+			commitLocA += int(commitdiffstat[f][0])
+			commitLocR += int(commitdiffstat[f][1])
 			commitHunk += int(commitdiffstat[f][2])
 			combinedCommitFile.add(f)
 
-		combinedCommitLoc += commitLoc
+		combinedCommitLocA += commitLocA
+		combinedCommitLocR += commitLocR
 		combinedCommitHunk += commitHunk
 
 		committers.add(dm[nextEnd].committer)
@@ -253,11 +255,11 @@ for x in xrange(0,len(branch_units)):
 			authorEnd = aTime
 
 		if args.csv:
-			w.write_commit_data(nextStart, nextEnd, commitFile, commitLoc, commitHunk, cTime, aTime)
+			w.write_commit_data(nextStart, nextEnd, commitFile, commitLocA, commitLocR, commitHunk, cTime, aTime)
 
 	# write out branch diff stats and combined commit stats to a csv file
 	if args.csv:
-		w.write_branch_data(start, end, branchdiffstat, numCommits, len(committers), len(authors), commitStart, commitEnd, authorStart, authorEnd, combinedCommitLoc, combinedCommitHunk, len(combinedCommitFile))
+		w.write_branch_data(start, end, branchdiffstat, numCommits, len(committers), len(authors), commitStart, commitEnd, authorStart, authorEnd, combinedCommitLocA, combinedCommitLocR, combinedCommitHunk, len(combinedCommitFile))
 
 
 
