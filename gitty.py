@@ -4,6 +4,7 @@
 import argparse
 import gitshell
 import dotter
+import sys
 from edge import Edge
 from writer import Writer
 from collections import deque
@@ -104,7 +105,7 @@ branch_units = [] # array of branch segments, which are also arrays of commits S
 visited = set()   # all commits that have been visited
 
 # traverse graph to store up branch segments, starting with the null commit
-stack = ["NULL"]
+stack = [NULL]
 queue = deque([])
 while stack:
 	# current node - don't want to remove it til we find all branch segments starting at it
@@ -180,13 +181,28 @@ while stack:
 			foundUnvisitedNode = True
 
 
+
+# progress updater
+COUNT = 0
+
 # go through all branch segments to diff and write those diffs to the file
 for x in xrange(0,len(branch_units)):
+
+	# progress updater
+	sys.stdout.write( "\rDiffing " + str(COUNT) + " of " + str(len(branch_units)) )
+	sys.stdout.flush()
+
 	branch_segment = branch_units[x]
+
 	numCommits = len(branch_segment) - 1
 	combinedCommitLoc, combinedCommitHunk, combinedCommitFile = 0, 0, 0
 	committers, authors = set(), set()
 	commitStart, authorStart, commitEnd, authorEnd = datetime(MAXYEAR,1,1), datetime(MAXYEAR,1,1), datetime(MINYEAR,1,1), datetime(MINYEAR,1,1)
+
+
+
+
+
 
 	# to measure impact - get the branch diff, diff from start...end of the segment
 	# special case: if the starting point is NULL, we created it. grab the next one
