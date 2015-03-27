@@ -196,71 +196,15 @@ for x in xrange(0,len(branch_units)):
 
 	# initialization
 	nextStartIndex, nextEndIndex = 0, 1
-	combinedCommitLoc, combinedCommitHunk, combinedCommitFile = 0, 0, 0
+	combinedCommitLoc, combinedCommitHunk, combinedCommitFile = 0, 0, set()
 	numCommits = len(branch_segment) - 1
 	committers, authors = set(), set()
 	commitStart, authorStart, commitEnd, authorEnd = datetime(MAXYEAR, 1, 1), datetime(MAXYEAR, 1, 1), datetime(MINYEAR, 1, 1), datetime(MINYEAR, 1, 1)
 
-
-	segmentHasOrphan = (is_orphan(branch_segment[0])
-	segmentOnlyHasOrphan = (segmentHasOrphan and numCommits == 1)
-
-	# if the orphan is the only item in this list, use the showstat as the branch as unit and commit summation unit
-	if segmentOnlyHasOrphan:
-		o = branch_segment[1] # actual orphan, not the "NULL" that we create
-		showstat = gitshell.show(o)
-
-		authors.add(dm[o].author)
-		committers.add(dm[o].committer)
-		commitTime, authorTime = dm[o].commit_date, dm[o].author_date
-
-		combinedCommitFile = len(showstat.keys())
-		for f in showstat.keys():
-			combinedCommitLoc += showstat[f][0] + showstat[f][1]
-			combinedCommitHunk += showstat[f][2]
-
-		if args.csv:
-			w.write_commit_data("NULL", o, combinedCommitFile, combinedCommitLoc, combinedCommitHunk, commitTime, authorTime)
-			w.write_branch_data("NULL", o, showstat, numCommits, len(committers), len(authors), commitTime, commitTime, authorTime, authorTime, combinedCommitLoc, combinedCommitHunk, combinedCommitFile)
-
-
-	else:
-		if segmentHasOrphan:
-			o = branch_segment[1] # actual orphan, not the "NULL" that we create
-			showstat = gitshell.show(o)
-			nextStartIndex, nextEndIndex = 1, 2 # can't use a commit diff on a NULL commit
-
-			combinedCommitFile = len(showstat.keys())
-			for f in showstat.keys():
-				combinedCommitLoc += showstat[f][0] + showstat[f][1]
-				combinedCommitHunk += showstat[f][2]
-
-
-		else:
-			print "something"
-		
-
-
-
-
-
-
-
-
 	# to measure impact - get the branch diff, diff from start...end of the segment
-	# special case: if the starting point is NULL, we created it. use git show for
-	#    the following commit, and git diff for the remainder
-
-	
-	specialOrphanCase = False
-	if is_orphan(branch_segment[0]):
-		showstat = gitshell.show(branch_segment[0])
-		specialOrphanCase = True
-
-	else:
-		start = branch_segment[0]
-		end = branch_segment[len(branch_segment) - 1]
-		branchdiffstat = gitshell.diff(args.repository, start, end)
+	start = branch_segment[0]
+	end = branch_segment[numCommits]
+	branchdiffstat = gitshell.diff(args.repository, start, end)
 
 	# to measure effort - get a combination of commit diffs throughout the branch segment
 	# keep a total of commit metadata as we go along
@@ -273,11 +217,11 @@ for x in xrange(0,len(branch_units)):
 
 		# add up total locs, hunks, and files within that commit's diff
 		commitLoc, commitHunk, commitFile = 0, 0, len(commitdiffstat.keys())
-		combinedCommitFile += commitFile
 
 		for f in commitdiffstat.keys():
 			commitLoc += int(commitdiffstat[f][0]) + int(commitdiffstat[f][1])
 			commitHunk += int(commitdiffstat[f][2])
+			combinedCommitFile.add(f)
 
 		combinedCommitLoc += commitLoc
 		combinedCommitHunk += commitHunk
@@ -298,14 +242,14 @@ for x in xrange(0,len(branch_units)):
 			authorEnd = aTime
 
 		if args.csv:
-			w.write_commit_data(nextStart, nextEnd, commitFile, commitLoc, commitHunk, dm[nextEnd])
+			w.write_commit_data(nextStart, nextEnd, commitFile, commitLoc, commitHunk, cTime, aTime)
 
 		nextStartIndex = nextStartIndex + 1
 		nextEndIndex = nextEndIndex + 1
 
 	# write out branch diff stats and combined commit stats to a csv file
 	if args.csv:
-		w.write_branch_data(start, end, branchdiffstat, numCommits, len(committers), len(authors), commitStart, commitEnd, authorStart, authorEnd, combinedCommitLoc, combinedCommitHunk, combinedCommitFile)
+		w.write_branch_data(start, end, branchdiffstat, numCommits, len(committers), len(authors), commitStart, commitEnd, authorStart, authorEnd, combinedCommitLoc, combinedCommitHunk, len(combinedCommitFile))
 
 
 
@@ -313,77 +257,6 @@ for x in xrange(0,len(branch_units)):
 # PRINT OUT LOC ADD/REMOVED SEPARATELY
 
 
-
-
-#
-## re-traverse squished graph to write to file
-#visited, queue = set(), ["NULL"]
-#while queue:
-#	node = queue.pop(0)
-#	if node not in visited:
-#		visited.add(node)
-#
-#		# for all children of this commit
-#		for child in dp[node]:
-#
-#			# draw edge in graph from parent (node) to child
-#			weight = 1
-#			if child in cache:
-#				weight = cache[child]._weight
-#
-#				# print diff for linear paths
-#				parent = node
-#				if parent == "NULL":
-#					parent = cache[child]._nparent
-#
-#				# get the diff for the entire branch
-#				branchdiffstat = gitshell.diff(args.repository, parent, child)
-#
-#				# get the diffs for each individual commit, starting
-#				# from the parent to this child
-#				lastChild = child
-#				nextParent = dc[lastChild][0]
-#				finishedLinearPath = False
-#
-#				combinedCommitLoc = 0
-#				combinedCommitHunk = 0
-#				combinedCommitFile = set()
-#
-#				while not finishedLinearPath:
-#					if (nextParent == "NULL"):
-#						finishedLinearPath = True
-#					else:
-#						commitdiffstat = gitshell.diff(args.repository, nextParent, lastChild)
-#
-#						# add up total locs and hunks for each file within that commit's diff
-#						commitLocs = 0
-#						commitHunks = 0
-#						for key in commitdiffstat.keys():
-#							commitLocs = commitLocs + int(commitdiffstat[key][0]) + int(commitdiffstat[key][1])
-#							commitHunks = commitHunks + int(commitdiffstat[key][2])
-#							combinedCommitFile.add(key)
-#
-#						if args.csv:
-#							w.write_commit_data(nextParent, lastChild, len(commitdiffstat.keys()), commitLocs, commitHunks, dm[lastChild])
-#
-#						# add upt total locs and hunks to all other commits in that branch
-#						combinedCommitLoc = combinedCommitLoc + commitLocs
-#						combinedCommitHunk = combinedCommitHunk + commitHunks
-#
-#					if nextParent == parent:
-#						finishedLinearPath = True
-#					elif not finishedLinearPath:
-#						lastChild = nextParent
-#						nextParent = dc[lastChild][0]
-#
-#				if args.csv:
-#					w.write_branch_data(node, child, branchdiffstat, cache[child], combinedCommitLoc, combinedCommitHunk, combinedCommitFile)
-#
-#			if args.graph:
-#				gwrite(graph, child, node, weight)
-#
-#			# visit
-#			queue.append(child)
 
 if args.graph:
 	end_graph(graph)
