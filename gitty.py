@@ -7,6 +7,7 @@ import dotter
 from edge import Edge
 from writer import Writer
 from collections import deque
+from datetime import datetime, timedelta, MINYEAR, MAXYEAR
 
 def init_graph(outputFile):
 	graph = open(outputFile, "wb")
@@ -49,7 +50,7 @@ def is_orphan(sha):
 	# todo: we /assume/ it's the first commit, but really it's just a commit
 	# with no parents. there can be multiple commits like this in a repo. need
 	# a better method of detection
-	return sha == "NULL"    # first commit
+	return sha == NULL    # first commit
 
 #def is_linear(sha):
 #	return not is_orphan(sha) and not is_merge(sha) and not is_branch(sha)
@@ -63,35 +64,6 @@ def is_end_point(sha):
 # pre-condition: sha is linear
 def is_first_linear(sha):
 	return not is_linear(dc[sha][0]) # or is_branch(dc[sha][0]) # if parent isn't linear
-
-def form_segment(fromNode):
-
-	segment = [fromNode]
-	queue = set()
-
-	# while there are still generations of children to traverse
-	nextGeneration = dp[fromNode]
-	while len(nextGeneration) >= 1:
-
-		# get the nextChild
-		nextChild = children[0]
-
-		# possible end points: MERGE, BAREN, BRANCH
-		# add merge point to the queue. don't keep merge commit in the segment
-		if is_merge(nextChild):
-			queue.append(nextChild)
-
-			# if there's only one item left in the branch segment and it's either
-			# a merge or a branch, drop it too.
-			if len(segment) == 1 and (is_merge(segment[0]) or is_branch(segment[0])):
-				segment.removeAll()
-
-
-		if is_orphan(nextChild):
-			segment.append(nextChild)
-
-		nextGeneration = dp[nextChild]
-
 
 def debug_what_am_i(sha):
 	if is_branch(sha):
@@ -126,7 +98,7 @@ if args.csv:
 	w.write_headers()
 
 # first traversal for mapping parent/child relationship to build up a tree
-dp, dc, dm = gitshell.build_commit_dicts(args.repository)
+NULL, dp, dc, dm = gitshell.build_commit_dicts(args.repository)
 
 branch_units = [] # array of branch segments, which are also arrays of commits SHAS.
 visited = set()   # all commits that have been visited
@@ -134,7 +106,6 @@ visited = set()   # all commits that have been visited
 # traverse graph to store up branch segments, starting with the null commit
 stack = ["NULL"]
 queue = deque([])
-
 while stack:
 	# current node - don't want to remove it til we find all branch segments starting at it
 	node = stack[0] # peek
@@ -210,6 +181,58 @@ while stack:
 
 
 # go through all branch segments to diff and write those diffs to the file
+for x in xrange(0,len(branch_units)):
+	branch_segment = branch_units[x]
+	numCommits = len(branch_segment) - 1
+	combinedCommitLoc, combinedCommitHunk, combinedCommitFile = 0, 0, 0
+	committers, authors = set(), set()
+	commitStart, authorStart, commitEnd, authorEnd = datetime(MAXYEAR,1,1), datetime(MAXYEAR,1,1), datetime(MINYEAR,1,1), datetime(MINYEAR,1,1)
+
+	# to measure impact - get the branch diff, diff from start...end of the segment
+	# special case: if the starting point is NULL, we created it. grab the next one
+	#   as the starting point.
+	start = branch_segment[0]
+	if is_orphan(start):
+		start = branch_segment[1]
+	end = branch_segment[len(branch_segment) - 1]
+
+	branchdiffstat = gitshell.diff(args.repository, start, end)
+
+	# to measure effort - get a combination of commit diffs throughout the branch segment
+	# keep a total of commit metadata as we go along
+	combinedCommitLoc = 0
+	combinedCommitHunk = 0
+	combinedCommitFile = 0
+	committers = set()
+	authors = set()
+	commitStart = datetime.now()
+	commitEnd = datetime.now()
+	authorStart = datetime.now()
+	authorEnd = datetime.now()
+
+	nextStartIndex = 0
+	nextEndIndex = 1
+	while (nextEndIndex < len(branch_segment)):
+		nextStart = branch_segment[nextStartIndex]
+		nextEnd = branch_segment[nextEndIndex]
+
+		commitdiffstat = gitshell.diff(args.repository, nextStart, nextEnd)
+		cAuthor = dm[nextEnd].author
+		cCommitter = dm[nextEnd].committer
+		cCommitTime = dm[nextEnd].commit_date
+		cAuthorTime = dm[nextEnd].author_date
+
+
+		# perform commit diffs and write them out to a csv file
+		if args.csv:
+
+
+		++nextStartIndex
+		++nextEndIndex
+
+	# write out branch diff stats and combined commit stats to a csv file
+	if args.csv:
+		w.write_branch_data(start, end, branchdiffstat, numCommits, len(committers), len(authors), commitStart, commitEnd, authorStart, authorEnd, combinedCommitLoc, combinedCommitHunk, combinedCommitFile)
 
 # re-traverse for marking what to write to the file, starting with the first commit using BFS
 #visited, queue = set(), ["NULL"]
