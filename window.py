@@ -7,7 +7,6 @@ from datetime import datetime, timedelta
 parser = argparse.ArgumentParser()
 parser.add_argument('branchcsv')
 parser.add_argument('-m', '--minutes', type=int)
-parser.add_argument('-o', '--hours', type=int)
 
 #parser.add_argument('commitcsv')
 
@@ -51,14 +50,13 @@ start = datetime.strptime(branches[0][COMMIT_START], "%Y-%m-%d %H:%M:%S")
 #start = datetime.strptime(commits[0][COMMIT_TIME], "%Y-%m-%d %H:%M:%S")
 #end = datetime.strptime(commits[len(commits) - 1][COMMIT_TIME], "%Y-%m-%d %H:%M:%S")
 
-SET_RANGE = 60
+SET_RANGE = 5
 
 if args.minutes:
+	if (args.minutes > 60):
+		args.minutes = 60
+		
 	SET_RANGE = args.minutes
-
-if args.hours:
-	SET_RANGE = args.hours * 60
-	
 
 # Slide the starting time window 5 minutes before the first commit (just ensures we have a starting window)
 start = (start - timedelta(minutes=start.minute % SET_RANGE)).replace(second=0)
@@ -98,34 +96,3 @@ for key in sorted(time_dic.keys()):
 	csv.write(str(key) + ',' + str(time_dic[key]) + '\n')
 
 csv.close()
-
-
-'''
-print "from " + str(start) + " to " + str(end)
-activity = []
-point = start
-while (point <= end):
-	print "checking at point: " + str(point)
-	numActiveBranches = 0
-
-	for branch in branches:
-		commit_s = datetime.strptime(branch[COMMIT_START], "%Y-%m-%d %H:%M:%S")
-		commit_e = datetime.strptime(branch[COMMIT_END], "%Y-%m-%d %H:%M:%S")
-
-		# if the commit time is in between
-		if (commit_s > point):
-			break;
-		elif (point <= commit_e):
-			numActiveBranches += 1
-
-	activity.append([point, numActiveBranches])
-
-	point = point + timedelta(hours=1)
-
-csv = open(args.branchcsv[:-4] + "-window.csv", 'w')
-csv.write('time,num branches\n')
-for p in activity:
-	line = str(p[0]) + ',' + str(p[1]) + '\n'
-	csv.write(line)
-csv.close()
-'''
