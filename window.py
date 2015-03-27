@@ -7,6 +7,7 @@ from datetime import datetime, timedelta
 parser = argparse.ArgumentParser()
 parser.add_argument('branchcsv')
 parser.add_argument('-m', '--minutes', type=int)
+parser.add_argument('-o', '--hours', type=int)
 
 #parser.add_argument('commitcsv')
 
@@ -58,40 +59,83 @@ if args.minutes:
 		
 	SET_RANGE = args.minutes
 
-# Set the starting time window one range increment before the first commit (just ensures we have a starting window)
-start = (start - timedelta(minutes=start.minute % SET_RANGE)).replace(second=0)
-start -= timedelta(minutes=SET_RANGE)
+	# Set the starting time window one range increment before the first commit (just ensures we have a starting window)
+	start = (start - timedelta(minutes=start.minute % SET_RANGE)).replace(second=0)
+	start -= timedelta(minutes=SET_RANGE)
 
-# Need to find the total time in minutes between the stat and end time and pad on a little extra to make sure we have a valid end range
-totalMin = int(SET_RANGE * round(float(((end - start).total_seconds())/60)/SET_RANGE)) + SET_RANGE
+	# Need to find the total time in minutes between the start and end time and pad on a little extra to make sure we have a valid end range
+	totalMin = int(SET_RANGE * round(float(((end - start).total_seconds())/60)/SET_RANGE)) + SET_RANGE
 
-# Use list comprehension to build a dictionary of all the possible time points (constant lookup time later)
-time_dic = {start + timedelta(minutes=x): 0 for x in range(0,totalMin,SET_RANGE)}
+	# Use list comprehension to build a dictionary of all the possible time points (constant lookup time later)
+	time_dic = {start + timedelta(minutes=x): 0 for x in range(0,totalMin,SET_RANGE)}
 
-for branch in branches:
-	commit_s = (datetime.strptime(branch[COMMIT_START], "%Y-%m-%d %H:%M:%S")).replace(second=0)
-	commit_e = (datetime.strptime(branch[COMMIT_END], "%Y-%m-%d %H:%M:%S")).replace(second=0)
+	for branch in branches:
+		commit_s = (datetime.strptime(branch[COMMIT_START], "%Y-%m-%d %H:%M:%S")).replace(second=0)
+		commit_e = (datetime.strptime(branch[COMMIT_END], "%Y-%m-%d %H:%M:%S")).replace(second=0)
 
-	while commit_s <= commit_e:
-		
-		# Get the distance that the minutes are off from the range increments
-		point = commit_s
-		discard = timedelta(minutes=commit_s.minute % SET_RANGE)
-		point -= discard
+		while commit_s <= commit_e:
+			
+			# Get the distance that the minutes are off from the range increments
+			point = commit_s
+			discard = timedelta(minutes=commit_s.minute % SET_RANGE)
+			point -= discard
 
-		# From the offset, decide whether to round the time up or down to the nearest interval
-		if discard >= timedelta(minutes= (SET_RANGE / float(2))):
-			point += timedelta(minutes=SET_RANGE)
+			# From the offset, decide whether to round the time up or down to the nearest interval
+			if discard >= timedelta(minutes= (SET_RANGE / float(2))):
+				point += timedelta(minutes=SET_RANGE)
 
-		# Find in the dictionary and increment
-		if point in time_dic:
-			time_dic[point] += 1
-		else:
-			# This should not happen unless something went awry
-			print "uh oh - " + str(point) + " " + branch[BRANCH_ID]
+			# Find in the dictionary and increment
+			if point in time_dic:
+				time_dic[point] += 1
+			else:
+				# This should not happen unless something went awry
+				print "uh oh - " + str(point) + " " + branch[BRANCH_ID]
 
-		# Narrow the time window to the next possible range
-		commit_s += timedelta(minutes=SET_RANGE)
+			# Narrow the time window to the next possible range
+			commit_s += timedelta(minutes=SET_RANGE)
+
+if args.hours:
+	SET_RANGE = args.hours
+
+	# Set the starting time window one range increment before the first commit (just ensures we have a starting window)
+	start = (start - timedelta(hours=start.hour % SET_RANGE)).replace(second=0, minute=0)
+	start -= timedelta(hours=SET_RANGE)
+
+	# Need to find the total time in hours between the start and end time and pad on an extra range to make sure we have a valid end range
+	totalHour = ((end - start).days * 24) + 24 + SET_RANGE
+
+	# Use list comprehension to build a dictionary of all the possible time points (constant lookup time later)
+	time_dic = {start + timedelta(hours=x): 0 for x in range(0,totalHour,SET_RANGE)}
+
+	for branch in branches:
+		commit_s = (datetime.strptime(branch[COMMIT_START], "%Y-%m-%d %H:%M:%S")).replace(second=0, minute=0)
+		commit_e = (datetime.strptime(branch[COMMIT_END], "%Y-%m-%d %H:%M:%S")).replace(second=0, minute=0)
+
+		while commit_s <= commit_e:
+			
+			# Get the distance that the minutes are off from the range increments
+			point = commit_s
+			#print "Start: " + str(point)
+			discard = timedelta(hours=commit_s.hour % SET_RANGE)
+			#print "Discard: " + str(discard)
+			point -= discard
+			#print "New Point: " + str(point)
+
+			# From the offset, decide whether to round the time up or down to the nearest interval
+			if discard >= timedelta(hours = (SET_RANGE / float(2))):
+				point += timedelta(hours = SET_RANGE)
+
+			#print "Transform Point: " + str(point)
+
+			# Find in the dictionary and increment
+			if point in time_dic:
+				time_dic[point] += 1
+			else:
+				# This should not happen unless something went awry
+				print "uh oh - " + str(point) + " " + branch[BRANCH_ID]
+
+			# Narrow the time window to the next possible range
+			commit_s += timedelta(hours = SET_RANGE)
 
 # Output
 csv = open(args.branchcsv[:-4] + "-window.csv", 'w')
