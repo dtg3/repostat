@@ -8,7 +8,8 @@ import sys
 from edge import Edge
 from writer import Writer
 from collections import deque
-from datetime import datetime, timedelta, MINYEAR, MAXYEAR
+from datetime import datetime, timedelta, MAXYEAR, MINYEAR
+from multiprocessing import Pool, Process, Queue
 
 def init_graph(outputFile):
 	graph = open(outputFile, "wb")
@@ -53,18 +54,19 @@ def is_orphan(sha):
 	# a better method of detection
 	return sha == NULL    # first commit
 
-#def is_linear(sha):
-#	return not is_orphan(sha) and not is_merge(sha) and not is_branch(sha)
-
 def is_linear(sha):
 	return len(dp[sha]) == 1 and len(dc[sha]) == 1 # has one parent and one child
 
-def is_end_point(sha):
-	return is_baren(sha) or is_merge(sha) or is_branch(sha)
+def apply_gitshell(commitdiffstat):
 
-# pre-condition: sha is linear
-def is_first_linear(sha):
-	return not is_linear(dc[sha][0]) # or is_branch(dc[sha][0]) # if parent isn't linear
+	nextParent = commitdiffstat[1]
+	lastChild = commitdiffstat[2]
+
+	commitdiffstatp = gitshell.diff(args.repository, nextParent, lastChild)
+	commitdiffstat[0] = commitdiffstatp
+
+	return commitdiffstat
+
 
 def debug_what_am_i(sha):
 	if is_branch(sha):
@@ -181,23 +183,64 @@ while stack:
 			foundUnvisitedNode = True
 
 
-
-# progress updater
-COUNT = 0
-
 # go through all branch segments to diff and write those diffs to the file
+COUNT = 0
 for x in xrange(0,len(branch_units)):
 
-	# progress updater
-	sys.stdout.write( "\rDiffing " + str(COUNT) + " of " + str(len(branch_units)) )
+	# quick progress update
+	COUNT = COUNT + 1
+	sys.stdout.write("\rDiffing " + str(COUNT) + " of " + str(len(branch_units)) + " branch segments.")
 	sys.stdout.flush()
 
 	branch_segment = branch_units[x]
 
-	numCommits = len(branch_segment) - 1
+	# initialization
+	nextStartIndex, nextEndIndex = 0, 1
 	combinedCommitLoc, combinedCommitHunk, combinedCommitFile = 0, 0, 0
+	numCommits = len(branch_segment) - 1
 	committers, authors = set(), set()
-	commitStart, authorStart, commitEnd, authorEnd = datetime(MAXYEAR,1,1), datetime(MAXYEAR,1,1), datetime(MINYEAR,1,1), datetime(MINYEAR,1,1)
+	commitStart, authorStart, commitEnd, authorEnd = datetime(MAXYEAR, 1, 1), datetime(MAXYEAR, 1, 1), datetime(MINYEAR, 1, 1), datetime(MINYEAR, 1, 1)
+
+
+	segmentHasOrphan = (is_orphan(branch_segment[0])
+	segmentOnlyHasOrphan = (segmentHasOrphan and numCommits == 1)
+
+	# if the orphan is the only item in this list, use the showstat as the branch as unit and commit summation unit
+	if segmentOnlyHasOrphan:
+		o = branch_segment[1] # actual orphan, not the "NULL" that we create
+		showstat = gitshell.show(o)
+
+		authors.add(dm[o].author)
+		committers.add(dm[o].committer)
+		commitTime, authorTime = dm[o].commit_date, dm[o].author_date
+
+		combinedCommitFile = len(showstat.keys())
+		for f in showstat.keys():
+			combinedCommitLoc += showstat[f][0] + showstat[f][1]
+			combinedCommitHunk += showstat[f][2]
+
+		if args.csv:
+			w.write_commit_data("NULL", o, combinedCommitFile, combinedCommitLoc, combinedCommitHunk, commitTime, authorTime)
+			w.write_branch_data("NULL", o, showstat, numCommits, len(committers), len(authors), commitTime, commitTime, authorTime, authorTime, combinedCommitLoc, combinedCommitHunk, combinedCommitFile)
+
+
+	else:
+		if segmentHasOrphan:
+			o = branch_segment[1] # actual orphan, not the "NULL" that we create
+			showstat = gitshell.show(o)
+			nextStartIndex, nextEndIndex = 1, 2 # can't use a commit diff on a NULL commit
+
+			combinedCommitFile = len(showstat.keys())
+			for f in showstat.keys():
+				combinedCommitLoc += showstat[f][0] + showstat[f][1]
+				combinedCommitHunk += showstat[f][2]
+
+
+		else:
+			print "something"
+		
+
+
 
 
 
@@ -205,113 +248,73 @@ for x in xrange(0,len(branch_units)):
 
 
 	# to measure impact - get the branch diff, diff from start...end of the segment
-	# special case: if the starting point is NULL, we created it. grab the next one
-	#   as the starting point.
-	start = branch_segment[0]
-	if is_orphan(start):
-		start = branch_segment[1]
-	end = branch_segment[len(branch_segment) - 1]
+	# special case: if the starting point is NULL, we created it. use git show for
+	#    the following commit, and git diff for the remainder
 
-	branchdiffstat = gitshell.diff(args.repository, start, end)
+	
+	specialOrphanCase = False
+	if is_orphan(branch_segment[0]):
+		showstat = gitshell.show(branch_segment[0])
+		specialOrphanCase = True
+
+	else:
+		start = branch_segment[0]
+		end = branch_segment[len(branch_segment) - 1]
+		branchdiffstat = gitshell.diff(args.repository, start, end)
 
 	# to measure effort - get a combination of commit diffs throughout the branch segment
 	# keep a total of commit metadata as we go along
-	combinedCommitLoc = 0
-	combinedCommitHunk = 0
-	combinedCommitFile = 0
-	committers = set()
-	authors = set()
-	commitStart = datetime.now()
-	commitEnd = datetime.now()
-	authorStart = datetime.now()
-	authorEnd = datetime.now()
-
-	nextStartIndex = 0
-	nextEndIndex = 1
 	while (nextEndIndex < len(branch_segment)):
 		nextStart = branch_segment[nextStartIndex]
 		nextEnd = branch_segment[nextEndIndex]
 
-		commitdiffstat = gitshell.diff(args.repository, nextStart, nextEnd)
-		cAuthor = dm[nextEnd].author
-		cCommitter = dm[nextEnd].committer
-		cCommitTime = dm[nextEnd].commit_date
-		cAuthorTime = dm[nextEnd].author_date
-
-
 		# perform commit diffs and write them out to a csv file
+		commitdiffstat = gitshell.diff(args.repository, nextStart, nextEnd)
+
+		# add up total locs, hunks, and files within that commit's diff
+		commitLoc, commitHunk, commitFile = 0, 0, len(commitdiffstat.keys())
+		combinedCommitFile += commitFile
+
+		for f in commitdiffstat.keys():
+			commitLoc += int(commitdiffstat[f][0]) + int(commitdiffstat[f][1])
+			commitHunk += int(commitdiffstat[f][2])
+
+		combinedCommitLoc += commitLoc
+		combinedCommitHunk += commitHunk
+
+		committers.add(dm[nextEnd].committer)
+		authors.add(dm[nextEnd].author)
+		cTime = dm[nextEnd].commit_date
+		aTime = dm[nextEnd].author_date
+
+		if cTime <= commitStart:
+			commitStart = cTime
+		if cTime >= commitEnd:
+			commitEnd = cTime
+
+		if aTime <= authorStart:
+			authorStart = aTime
+		if aTime >= authorEnd:
+			authorEnd = aTime
+
 		if args.csv:
+			w.write_commit_data(nextStart, nextEnd, commitFile, commitLoc, commitHunk, dm[nextEnd])
 
-
-		++nextStartIndex
-		++nextEndIndex
+		nextStartIndex = nextStartIndex + 1
+		nextEndIndex = nextEndIndex + 1
 
 	# write out branch diff stats and combined commit stats to a csv file
 	if args.csv:
 		w.write_branch_data(start, end, branchdiffstat, numCommits, len(committers), len(authors), commitStart, commitEnd, authorStart, authorEnd, combinedCommitLoc, combinedCommitHunk, combinedCommitFile)
 
-# re-traverse for marking what to write to the file, starting with the first commit using BFS
-#visited, queue = set(), ["NULL"]
-#while queue:
-#	node = queue.pop(0)
-#	if node not in visited:
-#		visited.add(node)
-#
-#		debug_what_am_i(node)
-#
-#
-#		if is_linear(node):
-#			parent = dc[node][0]
-#			if is_first_linear(node):
-#				# create edge from parent ending at current node, weight = 1
-#				# remove old edge, put new edge ending at this commit (no op)
-#				cache[node] = Edge(parent, 1, '')
-#
-#				# store metadata
-#				cache[node].committers.add(dm[node].committer)
-#				cache[node].authors.add(dm[node].author)
-#				cache[node].commitStartTime = dm[node].commit_date
-#				cache[node].commitEndTime = dm[node].commit_date
-#				cache[node].authorStartTime = dm[node].author_date
-#				cache[node].authorEndTime = dm[node].author_date
-#
-#			else:
-#				# extend parent's squished parent to end at current node, weight + 1
-#				temp = cache[parent]
-#				cache[node] = temp
-#				cache[node]._weight = temp._weight + 1
-				#
-#				cache[node].committers.add(dm[node].committer)
-#				cache[node].authors.add(dm[node].author)
-#
-#				# replace the author and commit start time if, in rewriting git
-#				# or oddities with parallel dev, this commit has an earlier time
-#				# than the parent commit
-#				if dm[node].commit_date <= cache[node].commitStartTime:
-#					cache[node].commitStartTime = dm[node].commit_date
-#
-#				if dm[node].author_date <= cache[node].authorStartTime:
-#					cache[node].authorStartTime = dm[node].author_date
-				#
-#				# only replace the end times if this commit has a later date
-#				if dm[node].commit_date >= cache[node].commitEndTime:
-#					cache[node].commitEndTime = dm[node].commit_date
-#
-#				if dm[node].author_date >= cache[node].authorEndTime:
-#					cache[node].authorEndTime = dm[node].author_date
-#
-#				del cache[parent]
-#
-#				# remove old edge, put new edge ending at this commit
-#				dp[temp._parent].remove(parent)
-#				dp[temp._parent].append(node)
-#
-#			if is_orphan(parent):
-#				cache[node]._nparent = node
-#
-#		# then visit the children of this commit
-#		for n in dp[node]:
-#			queue.append(n)
+
+
+# PRINT OUT HOW MANY OCTOPI THERE ARE
+# PRINT OUT LOC ADD/REMOVED SEPARATELY
+
+
+
+
 #
 ## re-traverse squished graph to write to file
 #visited, queue = set(), ["NULL"]
