@@ -58,11 +58,14 @@ if args.minutes:
 		
 	SET_RANGE = args.minutes
 
-# Slide the starting time window 5 minutes before the first commit (just ensures we have a starting window)
+# Set the starting time window one range increment before the first commit (just ensures we have a starting window)
 start = (start - timedelta(minutes=start.minute % SET_RANGE)).replace(second=0)
 start -= timedelta(minutes=SET_RANGE)
 
+# Need to find the total time in minutes between the stat and end time and pad on a little extra to make sure we have a valid end range
 totalMin = int(SET_RANGE * round(float(((end - start).total_seconds())/60)/SET_RANGE)) + SET_RANGE
+
+# Use list comprehension to build a dictionary of all the possible time points (constant lookup time later)
 time_dic = {start + timedelta(minutes=x): 0 for x in range(0,totalMin,SET_RANGE)}
 
 for branch in branches:
@@ -70,28 +73,30 @@ for branch in branches:
 	commit_e = (datetime.strptime(branch[COMMIT_END], "%Y-%m-%d %H:%M:%S")).replace(second=0)
 
 	while commit_s <= commit_e:
+		
+		# Get the distance that the minutes are off from the range increments
 		point = commit_s
 		discard = timedelta(minutes=commit_s.minute % SET_RANGE)
 		point -= discard
 
+		# From the offset, decide whether to round the time up or down to the nearest interval
 		if discard >= timedelta(minutes= (SET_RANGE / float(2))):
 			point += timedelta(minutes=SET_RANGE)
 
+		# Find in the dictionary and increment
 		if point in time_dic:
 			time_dic[point] += 1
 		else:
+			# This should not happen unless something went awry
 			print "uh oh - " + str(point) + " " + branch[BRANCH_ID]
 
+		# Narrow the time window to the next possible range
 		commit_s += timedelta(minutes=SET_RANGE)
 
-#print('time,num branches')
-#for key in sorted(time_dic.keys()):
-	#print str(key) + "," + str(time_dic[key])
-
+# Output
 csv = open(args.branchcsv[:-4] + "-window.csv", 'w')
 csv.write('time,num branches\n')
 
-#Write out results
 for key in sorted(time_dic.keys()):
 	csv.write(str(key) + ',' + str(time_dic[key]) + '\n')
 
