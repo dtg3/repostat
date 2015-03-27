@@ -5,7 +5,6 @@ import argparse
 import gitshell
 import dotter
 import sys
-from edge import Edge
 from writer import Writer
 from collections import deque
 from datetime import datetime, timedelta, MAXYEAR, MINYEAR
@@ -185,6 +184,7 @@ while stack:
 
 # go through all branch segments to diff and write those diffs to the file
 COUNT = 0
+pool = Pool(processes=8)
 for x in xrange(0,len(branch_units)):
 
 	# quick progress update
@@ -204,20 +204,31 @@ for x in xrange(0,len(branch_units)):
 	# to measure impact - get the branch diff, diff from start...end of the segment
 	start = branch_segment[0]
 	end = branch_segment[numCommits]
+
 	branchdiffstat = gitshell.diff(args.repository, start, end)
 
 	# to measure effort - get a combination of commit diffs throughout the branch segment
 	# keep a total of commit metadata as we go along
+	commitdiffstats = []
 	while (nextEndIndex < len(branch_segment)):
 		nextStart = branch_segment[nextStartIndex]
 		nextEnd = branch_segment[nextEndIndex]
 
-		# perform commit diffs and write them out to a csv file
-		commitdiffstat = gitshell.diff(args.repository, nextStart, nextEnd)
+		commitdiffstats.append([0, nextStart, nextEnd])
+
+		nextStartIndex = nextStartIndex + 1
+		nextEndIndex = nextEndIndex + 1
+
+	# perform commit diffs and write them out to a csv file
+	commitdiffstats = pool.map(apply_gitshell, (commitdiffstats))
+
+	for cdata in commitdiffstats:
+		commitdiffstat = cdata[0]
+		nextStart = cdata[1]
+		nextEnd = cdata[2]
 
 		# add up total locs, hunks, and files within that commit's diff
 		commitLoc, commitHunk, commitFile = 0, 0, len(commitdiffstat.keys())
-
 		for f in commitdiffstat.keys():
 			commitLoc += int(commitdiffstat[f][0]) + int(commitdiffstat[f][1])
 			commitHunk += int(commitdiffstat[f][2])
@@ -243,9 +254,6 @@ for x in xrange(0,len(branch_units)):
 
 		if args.csv:
 			w.write_commit_data(nextStart, nextEnd, commitFile, commitLoc, commitHunk, cTime, aTime)
-
-		nextStartIndex = nextStartIndex + 1
-		nextEndIndex = nextEndIndex + 1
 
 	# write out branch diff stats and combined commit stats to a csv file
 	if args.csv:

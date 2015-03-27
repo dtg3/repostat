@@ -1,5 +1,4 @@
 
-from edge import Edge
 from datetime import datetime, timedelta
 
 class Writer(object):
