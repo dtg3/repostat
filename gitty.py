@@ -56,6 +56,9 @@ def is_orphan(sha):
 def is_linear(sha):
 	return len(dp[sha]) == 1 and len(dc[sha]) == 1 # has one parent and one child
 
+def is_octopus(sha):
+	return len(dp[sha]) > 2 # has more than two parents, octopus merge required
+
 def apply_gitshell(commitdiffstat):
 
 	nextParent = commitdiffstat[1]
@@ -86,9 +89,7 @@ parser.add_argument('repository')
 parser.add_argument('-s','--svg', type=str)
 parser.add_argument('-g','--graph', type=str)
 parser.add_argument('-c','--csv', type=str)
-parser.add_argument('--branch-diff', type=bool)
-parser.add_argument('--branch-sum', type=bool)
-parser.add_argument('--no-branch', type=bool)
+parser.add_argument('-r','--repostats', type=bool)
 
 args = parser.parse_args()
 
@@ -101,6 +102,15 @@ if args.csv:
 
 # first traversal for mapping parent/child relationship to build up a tree
 NULL, dp, dc, dm = gitshell.build_commit_dicts(args.repository)
+
+# find all octopi
+if args.repostats:
+	octopi = 0
+	for sha in dp:
+		if is_octopus(sha):
+			octopi += 1
+	w.write_repo_stats("octopi", octopi)
+
 
 branch_units = [] # array of branch segments, which are also arrays of commits SHAS.
 visited = set()   # all commits that have been visited
@@ -260,12 +270,6 @@ for x in xrange(0,len(branch_units)):
 	# write out branch diff stats and combined commit stats to a csv file
 	if args.csv:
 		w.write_branch_data(start, end, branchdiffstat, numCommits, len(committers), len(authors), commitStart, commitEnd, authorStart, authorEnd, combinedCommitLocA, combinedCommitLocR, combinedCommitHunk, len(combinedCommitFile))
-
-
-
-# PRINT OUT HOW MANY OCTOPI THERE ARE
-# PRINT OUT LOC ADD/REMOVED SEPARATELY
-
 
 
 if args.graph:

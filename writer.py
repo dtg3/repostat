@@ -6,6 +6,7 @@ class Writer(object):
 	def __init__(self, filename):
 		self.branch_csv = open(filename + "-branch.csv", 'w')
 		self.commit_csv = open(filename + "-commit.csv", 'w')
+		self.repostats_csv = open(filename + "-repostats.csv", 'w')
 
 	def write_headers(self):
 		branchHeader = "id,num commits,branch files,avg branch files pc,commit files,avg commit files pc,branch locs added, branch locs removed,branch locs total,avg branch locs total pc,commit locs added, commit locs removed,commit locs total,avg commit locs total pc,branch hunks,avg branch hunks pc,commit hunks,avg commit hunks pc,num unique authors,num unique committers,commit start time,commit end time,commit time window,author start time, author end time,author time window"
@@ -13,6 +14,9 @@ class Writer(object):
 
 		commitHeader = "id,files,locs added,locs removed,locs total,hunks,commit time,author time"
 		self.commit_csv.write(commitHeader + '\n')
+
+	def write_repo_stats(self, summaryName, statistic):
+		self.repostats_csv.write(summaryName + "," + str(statistic) + "\n")
 
 	def write_commit_data(self, node, child, numFiles, numLocsAdded, numLocsRemoved, numHunks, cDate, aDate):
 		uniqueID = node + "..." + child
@@ -99,4 +103,5 @@ class Writer(object):
 	def close(self):
 		self.branch_csv.close()
 		self.commit_csv.close()
+		self.repostats_csv.close()
 
