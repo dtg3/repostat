@@ -12,6 +12,7 @@ def build_commit_dicts(repoPath):
 
 
 	output = subprocess.check_output(['git', '--git-dir', repoPath, 'log', '--branches', '--date=iso', '--pretty=format:"%cN<delim>%aN<delim>%cd<delim>%ad<delim>%H<delim>%P"']).splitlines()
+	#output = subprocess.check_output(['git', '--git-dir', repoPath, 'log', '--date=iso', '--pretty=format:"%cN<delim>%aN<delim>%cd<delim>%ad<delim>%H<delim>%P"']).splitlines()
 	dp = defaultdict(list) # dictionary where keys are parent commits
 	dc = defaultdict(list) # dictionary where keys are child commits
 	dmetadata = dict()     # dictionary where keys are commmits and values is metadata on it
