@@ -11,7 +11,7 @@
 				* 8ae92e63895000ff9b12046325ae381f3c17d414 (10-3-2007 (Tues.))
 				* Since commits are a work week apart, many sliding time windows would have missed these two highly related changes using author time.
 
-#### 6a364ced497e407ab3ffb2554d4ef2c78f801832...7b359ea6b3333a87fd3fa8b84913f2b75ed244ad - (16)**
+#### 6a364ced497e407ab3ffb2554d4ef2c78f801832...7b359ea6b3333a87fd3fa8b84913f2b75ed244ad - (16)
 	* Many commit focus heavily on a new hash map implementation. Additionally a few fixes are present as well.
 		* All commits from Nov 18th 2013 within this linear path are related to the new hash map implementation and it's usage with name-hash.c
 		* Subsequent commits also in the path, but dated Feb 24, 2014 also are related to the hash-map and hash-name
