@@ -5,6 +5,7 @@ import argparse
 import gitshell
 import dotter
 import sys
+from jsoner import Jsoner
 from writer import Writer
 from collections import deque
 from datetime import datetime, timedelta, MAXYEAR, MINYEAR
@@ -90,6 +91,7 @@ parser.add_argument('-s','--svg', type=str)
 parser.add_argument('-g','--graph', type=str)
 parser.add_argument('-c','--csv', type=str)
 parser.add_argument('-r','--repostats', type=bool)
+parser.add_argument('-j','--json', type=str)
 
 args = parser.parse_args()
 
@@ -99,6 +101,10 @@ if args.graph:
 if args.csv:
 	w = Writer(args.csv)
 	w.write_headers()
+
+if args.json:
+	j = Jsoner(args.json)
+
 
 # first traversal for mapping parent/child relationship to build up a tree
 NULL, dp, dc, dm = gitshell.build_commit_dicts(args.repository)
@@ -215,6 +221,9 @@ for x in xrange(0,len(branch_units)):
 	start = branch_segment[0]
 	end = branch_segment[numCommits]
 
+	if args.graph:
+		gwrite(graph, start, end, numCommits)
+
 	branchdiffstat = gitshell.diff(args.repository, start, end)
 
 	# to measure effort - get a combination of commit diffs throughout the branch segment
@@ -231,6 +240,9 @@ for x in xrange(0,len(branch_units)):
 
 	# perform commit diffs and write them out to a csv file
 	commitdiffstats = pool.map(apply_gitshell, (commitdiffstats))
+
+	if args.json:
+		j.addSegment()
 
 	for cdata in commitdiffstats:
 		commitdiffstat = cdata[0]
@@ -267,6 +279,16 @@ for x in xrange(0,len(branch_units)):
 		if args.csv:
 			w.write_commit_data(nextStart, nextEnd, commitFile, commitLocA, commitLocR, commitHunk, cTime, aTime)
 
+		if args.json:
+			json_cstats = j.formDiffStats(commitLocA, commitLocR, commitHunk, commitdiffstat.keys())
+			json_commit = j.formCommitStats(dc[nextEnd], dp[nextEnd], dm[nextEnd].committer, dm[nextEnd].author, cTime, aTime, "msg todo", "origin todo", json_cstats)
+			j.addCommitToLastSegment(nextEnd, json_commit)
+
+	# write out branch segment and commits info to json object
+	if args.json:
+		json_bstats = j.formDiffStats(combinedCommitLocA, combinedCommitLocR, combinedCommitHunk, combinedCommitFile)
+		j.addEuclideanToLastSegment(json_bstats)
+
 	# write out branch diff stats and combined commit stats to a csv file
 	if args.csv:
 		w.write_branch_data(start, end, branchdiffstat, numCommits, len(committers), len(authors), commitStart, commitEnd, authorStart, authorEnd, combinedCommitLocA, combinedCommitLocR, combinedCommitHunk, len(combinedCommitFile))
@@ -280,3 +302,7 @@ if args.csv:
 
 if args.svg:
 	dotter.draw_graph(args.output, args.svg)
+
+if args.json:
+	j.finish()
+
