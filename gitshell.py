@@ -8,36 +8,44 @@ def build_commit_dicts(repoPath):
 
 	# create the null commit for the lattice
 	empty_tree = subprocess.check_output(['git', '--git-dir', repoPath, 'hash-object', '-t', 'tree', '/dev/null']).splitlines()
-	NULL = empty_tree[0]  # magic number 4b825dc642cb6eb9a060e54bf8d69288fbee4904
+	NULL = empty_tree[0]   # magic number 4b825dc642cb6eb9a060e54bf8d69288fbee4904
 
-
-	output = subprocess.check_output(['git', '--git-dir', repoPath, 'log', '--branches', '--date=iso', '--pretty=format:"%cN<delim>%aN<delim>%cd<delim>%ad<delim>%H<delim>%P"']).splitlines()
-	#output = subprocess.check_output(['git', '--git-dir', repoPath, 'log', '--date=iso', '--pretty=format:"%cN<delim>%aN<delim>%cd<delim>%ad<delim>%H<delim>%P"']).splitlines()
 	dp = defaultdict(list) # dictionary where keys are parent commits
 	dc = defaultdict(list) # dictionary where keys are child commits
 	dmetadata = dict()     # dictionary where keys are commmits and values is metadata on it
+	
+	output = subprocess.check_output(['git', '--git-dir', repoPath, 'log', '--branches', '--date=iso', '--pretty=format:"%cN<delim>%aN<delim>%cd<delim>%ad<delim>%H<delim>%P<delim>%s<delim>%b<delim>"'])
+	data = output.split('<delim>')
 
-	for line in output:
-		results = line.strip("\"").split('<delim>')
-		
-		committer    = results[0]
-		author       = results[1]
-		commit_date  = utils.normalize_datetime(results[2])
-		author_date  = utils.normalize_datetime(results[3])
-		child        = results[4]
-		parents      = results[5].split()
+	# iterate through each delimited field - every 8 field marks the next commit metadata
+	index = 0
+	while ((index + 7) < len(data)):
+		# grab metadata from the first 8 delimited results
+		committer    = data[index].strip().strip('\"').strip().strip('\"') # STRIP IT ALL!!!!!!! (but really, without all strips a leading quote is left)
+		author       = data[index + 1].strip().strip('\"')
+		commit_date  = utils.normalize_datetime(data[index + 2])
+		author_date  = utils.normalize_datetime(data[index + 3])
+		child        = data[index + 4]
+		parents      = data[index + 5].split()
+		subject      = data[index + 6].strip().strip('\"')
+		body         = data[index + 7].strip().strip('\"')
+		dmetadata[child] = Metadata(committer, author, commit_date, author_date, subject, body)
 
-		commitMetadata = Metadata(committer, author, commit_date, author_date)
-		dmetadata[child] = commitMetadata
+		#print "###### " + child + " ######"
+		#print dmetadata[child].debug()
 
+		# build child/parent dictionaries
 		for p in parents:
 			if p:
 				dp[p].append(child)
 				dc[child].append(p)
 
+		# if the commit is an orphan, connect it to the null commit
 		if len(parents) == 0:
 			dp[NULL].append(child)
 			dc[child].append(NULL)
+
+		index += 8
 
 	return NULL, dp, dc, dmetadata
 

@@ -281,7 +281,7 @@ for x in xrange(0,len(branch_units)):
 
 		if args.json:
 			json_cstats = j.formDiffStats(commitLocA, commitLocR, commitHunk, commitdiffstat.keys())
-			json_commit = j.formCommitStats(dc[nextEnd], dp[nextEnd], dm[nextEnd].committer, dm[nextEnd].author, cTime, aTime, "msg todo", "origin todo", json_cstats)
+			json_commit = j.formCommitStats(dc[nextEnd], dp[nextEnd], dm[nextEnd].committer, dm[nextEnd].author, cTime, aTime, dm[nextEnd].msg, dm[nextEnd].body, "origin todo", json_cstats)
 			j.addCommitToLastSegment(nextEnd, json_commit)
 
 	# write out branch segment and commits info to json object
