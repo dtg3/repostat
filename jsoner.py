@@ -39,6 +39,9 @@ class Jsoner(object):
 	def formDiffStats(self, aloc, dloc, hunks, files):
 		return { "aloc" : aloc, "dloc" : dloc, "hunks" : hunks, "files" : list(files)}
 
+	def setRepositoryStats(self, octopi):
+		self.json['stats']['octopi'] = octopi
+
 	def finish(self):
 		json.dump(self.json, self.file, indent=4)
 		self.file.close()

@@ -108,6 +108,7 @@ if args.csv:
 
 if args.json:
 	j = Jsoner(args.json)
+	j.setRepositoryStats(octopi)
 
 branch_units = [] # array of branch segments, which are also arrays of commits SHAS.
 visited = set()   # all commits that have been visited
