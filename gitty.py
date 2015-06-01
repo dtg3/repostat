@@ -37,8 +37,6 @@ def write_csv(diffstats, csvfile):
 				csvfile.write(',' + item)
 			csvfile.write('\n')
 
-
-# going bottom (first commit ever) up (most recent)
 def is_branch(sha):
 	return len(dp[sha]) > 1 # parent has more than one child
 
@@ -52,7 +50,7 @@ def is_orphan(sha):
 	# todo: we /assume/ it's the first commit, but really it's just a commit
 	# with no parents. there can be multiple commits like this in a repo. need
 	# a better method of detection
-	return sha == NULL    # first commit
+	return sha == NULL      # first commit
 
 def is_linear(sha):
 	return len(dp[sha]) == 1 and len(dc[sha]) == 1 # has one parent and one child
@@ -61,7 +59,6 @@ def is_octopus(sha):
 	return len(dp[sha]) > 2 # has more than two parents, octopus merge required
 
 def apply_gitshell(commitdiffstat):
-
 	nextParent = commitdiffstat[1]
 	lastChild = commitdiffstat[2]
 
@@ -70,30 +67,36 @@ def apply_gitshell(commitdiffstat):
 
 	return commitdiffstat
 
-
 def debug_what_am_i(sha):
 	if is_branch(sha):
-		print sha + " is branch!"
+		print sha + " is branch"
 	if is_merge(sha):
-		print sha + " is merge!"
+		print sha + " is merge"
 	if is_orphan(sha):
-		print sha + " is orphan!"
+		print sha + " is orphan"
 	if is_baren(sha):
-		print sha + " is bare!"
+		print sha + " is bare"
 	if is_linear(sha):
-		print sha + " is linear!"
+		print sha + " is linear"
 
 # main
 parser = argparse.ArgumentParser()
-
 parser.add_argument('repository')
 parser.add_argument('-s','--svg', type=str)
 parser.add_argument('-g','--graph', type=str)
 parser.add_argument('-c','--csv', type=str)
-parser.add_argument('-r','--repostats', type=bool)
 parser.add_argument('-j','--json', type=str)
 
 args = parser.parse_args()
+
+# first traversal for mapping parent/child relationship to build up a tree
+NULL, dp, dc, dm = gitshell.build_commit_dicts(args.repository)
+
+# find all octopi
+octopi = 0
+for sha in dp:
+	if is_octopus(sha):
+		octopi += 1
 
 if args.graph:
 	graph = init_graph(args.graph) # dot graph
@@ -101,22 +104,10 @@ if args.graph:
 if args.csv:
 	w = Writer(args.csv)
 	w.write_headers()
+	w.write_repo_stats("octopi", octopi)
 
 if args.json:
 	j = Jsoner(args.json)
-
-
-# first traversal for mapping parent/child relationship to build up a tree
-NULL, dp, dc, dm = gitshell.build_commit_dicts(args.repository)
-
-# find all octopi
-if args.repostats:
-	octopi = 0
-	for sha in dp:
-		if is_octopus(sha):
-			octopi += 1
-	w.write_repo_stats("octopi", octopi)
-
 
 branch_units = [] # array of branch segments, which are also arrays of commits SHAS.
 visited = set()   # all commits that have been visited
@@ -130,7 +121,6 @@ while stack:
 	children = dp[node]
 
 	for x in xrange(0,len(children)):
-
 		# continue finding grand-children until we reach an end point
 		addAsBranchSegment = True
 		fullSegmentFound = False
@@ -176,7 +166,6 @@ while stack:
 			if not fullSegmentFound:
 				nextGeneration = dp[nextChild]
 				nextChild = nextGeneration[0]
-
 
 		# build up the array of all branch segments
 		if addAsBranchSegment:
@@ -292,7 +281,6 @@ for x in xrange(0,len(branch_units)):
 	# write out branch diff stats and combined commit stats to a csv file
 	if args.csv:
 		w.write_branch_data(start, end, branchdiffstat, numCommits, len(committers), len(authors), commitStart, commitEnd, authorStart, authorEnd, combinedCommitLocA, combinedCommitLocR, combinedCommitHunk, len(combinedCommitFile))
-
 
 if args.graph:
 	end_graph(graph)

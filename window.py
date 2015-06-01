@@ -37,22 +37,13 @@ AUTHOR_WINDOW = 21
 #COMMIT_TIME = 4
 #AUTHOR_TIME = 5
 
-# INEFFICIENT I KNOW!!!!
 # sort branch csv based on commit start time
 branches.sort(key=lambda x: x[COMMIT_END])
 end = datetime.strptime(branches[len(branches) - 1][COMMIT_END], "%Y-%m-%d %H:%M:%S")
 branches.sort(key=lambda x: x[COMMIT_START])
 start = datetime.strptime(branches[0][COMMIT_START], "%Y-%m-%d %H:%M:%S")
 
-# sort commits csv based on time of commit time
-#commits.sort(key=lambda x: x[COMMIT_TIME])
-
-# first commit - time to start at! last commit - time te stop!
-#start = datetime.strptime(commits[0][COMMIT_TIME], "%Y-%m-%d %H:%M:%S")
-#end = datetime.strptime(commits[len(commits) - 1][COMMIT_TIME], "%Y-%m-%d %H:%M:%S")
-
 SET_RANGE = 5
-
 if args.minutes:
 	if (args.minutes > 60):
 		args.minutes = 60
@@ -115,17 +106,12 @@ if args.hours:
 			
 			# Get the distance that the minutes are off from the range increments
 			point = commit_s
-			#print "Start: " + str(point)
 			discard = timedelta(hours=commit_s.hour % SET_RANGE)
-			#print "Discard: " + str(discard)
 			point -= discard
-			#print "New Point: " + str(point)
 
 			# From the offset, decide whether to round the time up or down to the nearest interval
 			if discard >= timedelta(hours = (SET_RANGE / float(2))):
 				point += timedelta(hours = SET_RANGE)
-
-			#print "Transform Point: " + str(point)
 
 			# Find in the dictionary and increment
 			if point in time_dic:

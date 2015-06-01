@@ -31,16 +31,12 @@ def build_commit_dicts(repoPath):
 		body         = data[index + 7].strip().strip('\"')
 		dmetadata[child] = Metadata(committer, author, commit_date, author_date, subject, body)
 
-		#print "###### " + child + " ######"
-		#print dmetadata[child].debug()
-
 		# build child/parent dictionaries
 		for p in parents:
 			if p:
 				dp[p].append(child)
 				dc[child].append(p)
 
-		# if the commit is an orphan, connect it to the null commit
 		if len(parents) == 0:
 			dp[NULL].append(child)
 			dc[child].append(NULL)
@@ -80,14 +76,12 @@ def diff(repoPath, parentSHA, commitSHA):
 				# file was renamed/moved, will give you both the old name and the new name)
 				# and makes sure that we only store the new name of the file, as that is what
 				# we use when counting up all the hunks.
-
 				fileName = r1.sub("\g<1>\g<3>\g<4>", fileName)
 				fileName = r2.sub('/', fileName) # idk regex D:
 
 				# file was renamed completely, such that there were no "{" or "}"
 				if "=>" in fileName:
 					fileName = r3.sub("\g<1>", fileName)
-
 				###
 
 				linesAdded = "0" if "-" in stat[0] else stat[0]

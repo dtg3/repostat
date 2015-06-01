@@ -27,10 +27,10 @@ class Metadata(object):
 		print "author_date = " + str(self.author_date)
 
 		if self.msg is not None:
-			print "subject     = " + self.msg
+			print "subject = " + self.msg
 
 		if self.body is not None:
-			print "body        = " + self.body
+			print "body    = " + self.body
 
 	def fdel(self):
 		del self.committer

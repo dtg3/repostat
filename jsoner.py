@@ -1,5 +1,5 @@
 #!/usr/bin/python
-import json, pprint
+import json
 
 class Jsoner(object):
 
