@@ -1,32 +1,13 @@
 #!/usr/bin/python
 
 #run me from the git repo root
-import argparse
-import gitshell
-import dotter
-import sys
+import argparse, sys, gitshell
+from dotter import Dotter
 from jsoner import Jsoner
 from writer import Writer
 from collections import deque
 from datetime import datetime, timedelta, MAXYEAR, MINYEAR
 from multiprocessing import Pool, Process, Queue
-
-def init_graph(outputFile):
-	graph = open(outputFile, "wb")
-	graph.write('graph TD;\n')
-	return graph
-
-def end_graph(graph):
-	graph.close()
-
-# write to dot graph
-def gwrite(graph, child, parent, weight):
-	if not parent:
-		graph.write('\tNULL-->' + child + ';\n')
-	elif weight == 1:
-		graph.write('\t' + parent + '-->' + child + ';\n')
-	elif weight > 1:
-		graph.write('\t' + parent + '-->' + '|' + str(weight) + '| ' + child + ';\n')
 
 def write_csv(diffstats, csvfile):
 	if args.csv:
@@ -82,7 +63,6 @@ def debug_what_am_i(sha):
 # main
 parser = argparse.ArgumentParser()
 parser.add_argument('repository')
-parser.add_argument('-s','--svg', type=str)
 parser.add_argument('-g','--graph', type=str)
 parser.add_argument('-c','--csv', type=str)
 parser.add_argument('-j','--json', type=str)
@@ -99,7 +79,7 @@ for sha in dp:
 		octopi += 1
 
 if args.graph:
-	graph = init_graph(args.graph) # dot graph
+	graph = Dotter(args.graph) # dot graph
 
 if args.csv:
 	w = Writer(args.csv)
@@ -212,7 +192,7 @@ for x in xrange(0,len(branch_units)):
 	end = branch_segment[numCommits]
 
 	if args.graph:
-		gwrite(graph, start, end, numCommits)
+		graph.gwrite(start, end, numCommits)
 
 	branchdiffstat = gitshell.diff(args.repository, start, end)
 
@@ -284,13 +264,10 @@ for x in xrange(0,len(branch_units)):
 		w.write_branch_data(start, end, branchdiffstat, numCommits, len(committers), len(authors), commitStart, commitEnd, authorStart, authorEnd, combinedCommitLocA, combinedCommitLocR, combinedCommitHunk, len(combinedCommitFile))
 
 if args.graph:
-	end_graph(graph)
+	graph.end()
 
 if args.csv:
 	w.close()
-
-if args.svg:
-	dotter.draw_graph(args.output, args.svg)
 
 if args.json:
 	j.finish()
