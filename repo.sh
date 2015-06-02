@@ -1,5 +1,5 @@
 
-for f in ../github-repos/*.git;
+for f in ../github-repos-expanded/*;
 do
     echo "Running: $f"
     #echo "File:"
@@ -9,7 +9,7 @@ do
     #echo "Last Commit:"
     #git --git-dir $f log -1
     echo "LOC:"
-    for file in $(git --git-dir $f ls-tree --name-only -r HEAD); do
-	git show HEAD:"$file"
+    for file in $(git --git-dir "$f/.git" ls-tree --name-only -r HEAD); do
+	   git --git-dir "$f/.git" show HEAD:"$file"
     done | wc -l
 done
